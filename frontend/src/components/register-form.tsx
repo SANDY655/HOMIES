@@ -1,5 +1,5 @@
 // src/components/RegisterForm.tsx
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,8 +40,8 @@ export function RegisterForm({
     resolver: zodResolver(registerSchema),
   });
 
-  const [loading, setLoading] = React.useState(false);
-  const [message, setMessage] = React.useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   const onSubmit = async (data: RegisterSchema) => {
     setLoading(true);
@@ -74,6 +74,13 @@ export function RegisterForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
+          <div className="bg-muted relative hidden md:block">
+            <img
+              src="/img1.jpg"
+              alt="Image"
+              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+            />
+          </div>
           <form
             className="p-6 md:p-8"
             onSubmit={handleSubmit(onSubmit)}
@@ -149,14 +156,6 @@ export function RegisterForm({
               </div>
             </div>
           </form>
-
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/img1.jpg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
         </CardContent>
       </Card>
     </div>
