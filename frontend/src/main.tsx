@@ -21,6 +21,8 @@ import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
 
 import App from "./App.tsx";
+import loginForm, { LoginForm } from "./components/login-form.tsx";
+import registerForm from "./components/register-form.tsx";
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -41,6 +43,8 @@ const indexRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  loginForm(rootRoute),
+  registerForm(rootRoute),
   DemoTable(rootRoute),
   DemoTanstackQuery(rootRoute),
 ]);
