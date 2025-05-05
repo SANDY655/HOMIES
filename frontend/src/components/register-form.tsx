@@ -1,23 +1,34 @@
+// src/components/RegisterForm.tsx
+import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+
+// UI components (adjust import paths as needed)
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import axios from "axios";
-import { useState } from "react";
 
-// Zod schema for validation
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+// Zod schema
+const registerSchema = z
+  .object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z
+      .string()
+      .min(6, "Password must be at least 6 characters"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  });
 
-type LoginSchema = z.infer<typeof loginSchema>;
+type RegisterSchema = z.infer<typeof registerSchema>;
 
-export function LoginForm({
+export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
@@ -25,37 +36,37 @@ export function LoginForm({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginSchema>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterSchema>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [message, setMessage] = React.useState("");
 
-  const onSubmit = async (data: LoginSchema) => {
-    setLoading(true); // Set loading state when form submission starts
-    setMessage(""); // Reset message state
-
+  const onSubmit = async (data: RegisterSchema) => {
+    setLoading(true);
+    setMessage("");
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/user/login",
+        "http://localhost:5000/api/user/register",
         {
           email: data.email,
           password: data.password,
+          confirmPassword: data.confirmPassword,
         },
-        {
-          withCredentials: true, // Send cookies if needed
-        }
+        { withCredentials: true }
       );
-      setMessage("Login Successful");
+
+      setMessage("Registration successful!");
+      console.log("Success:", response.data);
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
-        setMessage(error.response?.data?.message || "Login failed");
+        setMessage(error.response?.data?.message || "Registration failed.");
       } else {
-        setMessage("An unexpected error occurred");
+        setMessage("An unexpected error occurred.");
       }
     } finally {
-      setLoading(false); // Reset loading state after request is completed
+      setLoading(false);
     }
   };
 
@@ -63,16 +74,20 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            className="p-6 md:p-8"
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+          >
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Welcome back</h1>
-                <p className="text-muted-foreground text-balance">
-                  Login to your HOMIES account
+                <h1 className="text-2xl font-bold">Welcome</h1>
+                <p className="text-muted-foreground">
+                  Register your HOMIES account
                 </p>
               </div>
 
-              {/* Email Field */}
+              {/* Email */}
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -86,17 +101,9 @@ export function LoginForm({
                 )}
               </div>
 
-              {/* Password Field */}
+              {/* Password */}
               <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -109,29 +116,40 @@ export function LoginForm({
                 )}
               </div>
 
-              {/* Submit Button */}
+              {/* Confirm Password */}
+              <div className="grid gap-3">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...register("confirmPassword")}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-500">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Registering..." : "Register"}
               </Button>
 
-              {/* Display message */}
               {message && (
-                <p className="text-center text-sm text-green-500">{message}</p>
+                <p className="text-center text-sm text-muted-foreground">
+                  {message}
+                </p>
               )}
 
-              <div className="grid grid-cols-3 gap-4"></div>
-
-              {/* Redirect to Sign Up page */}
               <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
+                Already have an account?{" "}
                 <a href="#" className="underline underline-offset-4">
-                  Sign up
+                  Sign in
                 </a>
               </div>
             </div>
           </form>
 
-          {/* Right image section */}
           <div className="bg-muted relative hidden md:block">
             <img
               src="/img1.jpg"
@@ -141,12 +159,6 @@ export function LoginForm({
           </div>
         </CardContent>
       </Card>
-
-      {/* Footer Text */}
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </div>
     </div>
   );
 }
