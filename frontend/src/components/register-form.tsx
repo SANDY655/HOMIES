@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createRoute, RootRoute } from "@tanstack/react-router";
 
 // Zod schema
 const registerSchema = z
@@ -71,93 +72,105 @@ export function RegisterForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/img1.jpg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
-          <form
-            className="p-6 md:p-8"
-            onSubmit={handleSubmit(onSubmit)}
-            noValidate
-          >
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Welcome</h1>
-                <p className="text-muted-foreground">
-                  Register your HOMIES account
-                </p>
-              </div>
-
-              {/* Email */}
-              <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  {...register("email")}
+    <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
+      <div className="w-full max-w-sm md:max-w-3xl">
+        <div className={cn("flex flex-col gap-6", className)} {...props}>
+          <Card className="overflow-hidden p-0">
+            <CardContent className="grid p-0 md:grid-cols-2">
+              <div className="bg-muted relative hidden md:block">
+                <img
+                  src="/img1.jpg"
+                  alt="Image"
+                  className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
-                )}
               </div>
+              <form
+                className="p-6 md:p-8"
+                onSubmit={handleSubmit(onSubmit)}
+                noValidate
+              >
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col items-center text-center">
+                    <h1 className="text-2xl font-bold">Welcome</h1>
+                    <p className="text-muted-foreground">
+                      Register your HOMIES account
+                    </p>
+                  </div>
 
-              {/* Password */}
-              <div className="grid gap-3">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+                  {/* Email */}
+                  <div className="grid gap-3">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="m@example.com"
+                      {...register("email")}
+                    />
+                    {errors.email && (
+                      <p className="text-sm text-red-500">
+                        {errors.email.message}
+                      </p>
+                    )}
+                  </div>
 
-              {/* Confirm Password */}
-              <div className="grid gap-3">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  {...register("confirmPassword")}
-                />
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
-                    {errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
+                  {/* Password */}
+                  <div className="grid gap-3">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      {...register("password")}
+                    />
+                    {errors.password && (
+                      <p className="text-sm text-red-500">
+                        {errors.password.message}
+                      </p>
+                    )}
+                  </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Registering..." : "Register"}
-              </Button>
+                  {/* Confirm Password */}
+                  <div className="grid gap-3">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      {...register("confirmPassword")}
+                    />
+                    {errors.confirmPassword && (
+                      <p className="text-sm text-red-500">
+                        {errors.confirmPassword.message}
+                      </p>
+                    )}
+                  </div>
 
-              {message && (
-                <p className="text-center text-sm text-muted-foreground">
-                  {message}
-                </p>
-              )}
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Registering..." : "Register"}
+                  </Button>
 
-              <div className="text-center text-sm">
-                Already have an account?{" "}
-                <a href="#" className="underline underline-offset-4">
-                  Sign in
-                </a>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                  {message && (
+                    <p className="text-center text-sm text-muted-foreground">
+                      {message}
+                    </p>
+                  )}
+
+                  <div className="text-center text-sm">
+                    Already have an account?{" "}
+                    <a href="#" className="underline underline-offset-4">
+                      Sign in
+                    </a>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
+export default (parentRoute: RootRoute) =>
+  createRoute({
+    path: "/register",
+    component: RegisterForm,
+    getParentRoute: () => parentRoute,
+  });

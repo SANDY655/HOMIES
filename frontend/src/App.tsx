@@ -1,6 +1,5 @@
 import { LoginForm } from "./components/login-form";
 import { RegisterForm } from "./components/register-form";
-import logo from "./logo.svg";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function App() {
