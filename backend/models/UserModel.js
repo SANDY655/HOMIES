@@ -12,6 +12,10 @@ const userSchema = new mongoose.Schema(
       required: [true, "Provide Password"],
       select: false,
     },
+    isLoggedIn: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

@@ -1,6 +1,7 @@
 const { UserModel } = require("../models/UserModel");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
+const blacklist = require("../utils/tokenBlacklist");
 
 dotenv.config();
 async function register(req, res) {
@@ -70,11 +71,20 @@ async function login(req, res) {
         success: false,
       });
     }
+    if (user.isLoggedIn) {
+      return res.status(400).json({
+        message: "Already Logged in",
+        error: true,
+        success: false,
+      });
+    }
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+    user.isLoggedIn = true;
+    await user.save();
     return res.json({
       message: "Login Successful",
       token,
@@ -89,4 +99,40 @@ async function login(req, res) {
     });
   }
 }
-module.exports = { register, login };
+async function logout(req, res) {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
+    if (!token) {
+      return res.status(400).json({
+        message: "No token provided",
+        success: false,
+        error: true,
+      });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await UserModel.findById(decoded.id);
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+        success: false,
+        error: true,
+      });
+    }
+    blacklist.add(token);
+    user.isLoggedIn = false;
+    await user.save();
+    return res.json({
+      message: "Logged Out Successfully",
+      success: true,
+      error: false,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || error,
+      success: false,
+      error: true,
+    });
+  }
+}
+module.exports = { register, login, logout };

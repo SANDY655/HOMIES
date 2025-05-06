@@ -23,6 +23,7 @@ import reportWebVitals from "./reportWebVitals.ts";
 import App from "./App.tsx";
 import loginForm, { LoginForm } from "./components/login-form.tsx";
 import registerForm from "./components/register-form.tsx";
+import DashboardRoute from "./pages/Dashboard.tsx";
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -45,6 +46,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   loginForm(rootRoute),
   registerForm(rootRoute),
+  DashboardRoute(rootRoute),
   DemoTable(rootRoute),
   DemoTanstackQuery(rootRoute),
 ]);
@@ -53,6 +55,11 @@ const router = createRouter({
   routeTree,
   context: {
     ...TanstackQuery.getContext(),
+    auth: {
+      isAuthenticated: () => {
+        return Boolean(localStorage.getItem("token"));
+      },
+    },
   },
   defaultPreload: "intent",
   scrollRestoration: true,
