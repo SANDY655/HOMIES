@@ -24,7 +24,9 @@ import App from "./App.tsx";
 import loginForm, { LoginForm } from "./components/login-form.tsx";
 import registerForm from "./components/register-form.tsx";
 import DashboardRoute from "./pages/Dashboard.tsx";
-
+import PostRoomRoute from "./pages/PostRoom.tsx";
+import FindingRoommatesRoute from "./pages/FindRoomates.tsx";
+import SearchRoomRoute from "./pages/SearchRoom.tsx";
 const rootRoute = createRootRoute({
   component: () => (
     <>
@@ -47,6 +49,9 @@ const routeTree = rootRoute.addChildren([
   loginForm(rootRoute),
   registerForm(rootRoute),
   DashboardRoute(rootRoute),
+  PostRoomRoute(rootRoute),
+  SearchRoomRoute(rootRoute),
+  FindingRoommatesRoute(rootRoute),
   DemoTable(rootRoute),
   DemoTanstackQuery(rootRoute),
 ]);

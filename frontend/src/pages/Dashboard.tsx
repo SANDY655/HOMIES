@@ -75,7 +75,7 @@ export function Dashboard() {
           <Card className="rounded-lg bg-white shadow-md">
             <CardHeader className="flex flex-col items-center py-6">
               <Avatar
-                src={email?.avatar || "/default-avatar.jpg"}
+                src={email?.avatar || "/img2.png"}
                 alt="User Avatar"
                 className="w-24 h-24 mb-4 border-2 border-gray-300"
               />
