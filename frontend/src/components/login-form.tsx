@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
 import { useState } from "react";
-import { createRoute, RootRoute, useNavigate } from "@tanstack/react-router";
+import { createRoute, RootRoute } from "@tanstack/react-router";
 import { useRouter } from "@tanstack/react-router";
-// Zod schema for validation
+// Zod schema
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -46,10 +46,14 @@ export function LoginForm({
         },
         { withCredentials: true }
       );
-      console.log(response);
-      localStorage.setItem("user", JSON.stringify(data.email));
-      setMessage("Login Successful");
 
+      // Expecting response to have { token, user }
+      const { token } = response.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("email", JSON.stringify(data.email));
+
+      setMessage("Login Successful");
       const redirectTo = router.state.location.search.redirect ?? "/dashboard";
       router.navigate({ to: redirectTo });
     } catch (error: any) {
@@ -76,7 +80,6 @@ export function LoginForm({
                 </p>
               </div>
 
-              {/* Email Field */}
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -90,7 +93,6 @@ export function LoginForm({
                 )}
               </div>
 
-              {/* Password Field */}
               <div className="grid gap-3">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
@@ -113,23 +115,24 @@ export function LoginForm({
                 )}
               </div>
 
-              {/* Submit Button */}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
               </Button>
 
-              {/* Display message */}
               {message && (
-                <p className="text-center text-sm text-green-500">{message}</p>
+                <p
+                  className={`text-center text-sm ${
+                    message.includes("Success")
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {message}
+                </p>
               )}
-
-              <div className="grid grid-cols-3 gap-4"></div>
-
-              {/* Redirect to Sign Up page */}
             </div>
           </form>
 
-          {/* Right image section */}
           <div className="bg-muted relative hidden md:block">
             <img
               src="/img1.jpg"
@@ -139,8 +142,6 @@ export function LoginForm({
           </div>
         </CardContent>
       </Card>
-
-      {/* Footer Text */}
     </div>
   );
 }

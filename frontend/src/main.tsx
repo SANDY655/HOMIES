@@ -57,7 +57,7 @@ const router = createRouter({
     ...TanstackQuery.getContext(),
     auth: {
       isAuthenticated: () => {
-        return Boolean(localStorage.getItem("user"));
+        return Boolean(localStorage.getItem("token"));
       },
     },
   },
