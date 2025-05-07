@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { connectDB } = require("./connectDB");
 const { userRouter } = require("./routes/UserRouter");
+const { roomRouter } = require("./routes/RoomRouter");
 const app = express();
 app.use(
   cors({
@@ -12,6 +13,7 @@ app.use(
 app.use(express.json());
 
 app.use("/api/user", userRouter);
+app.use("/api/room", roomRouter);
 
 connectDB().then(() => {
   app.listen(5000, () => {
