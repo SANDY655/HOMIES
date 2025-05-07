@@ -15,12 +15,13 @@ import {
   Paper,
   Avatar,
   Divider,
+  MenuItem,
+  Stack,
 } from "@mui/material";
 import { z } from "zod";
-import { CheckCircleOutline } from "@mui/icons-material";
+import { CheckCircleOutline, ErrorOutline } from "@mui/icons-material";
 import { motion } from "framer-motion";
-import type { RootRoute } from "@tanstack/react-router";
-import { createRoute, redirect } from "@tanstack/react-router";
+import { createRoute, RootRoute, redirect } from "@tanstack/react-router";
 
 const steps = ["Room Details", "Photos", "Amenities", "Review & Confirm"];
 
@@ -29,7 +30,10 @@ const stepSchemas = [
     title: z.string().min(3, "Title is too short"),
     description: z.string().min(10, "Description is too short"),
     location: z.string().min(2, "Location required"),
-    rent: z.number().min(100, "Minimum rent is 100"),
+    rent: z.coerce.number().min(100, "Minimum rent is 100"),
+    deposit: z.coerce.number().min(0, "Deposit can't be negative"),
+    availableFrom: z.string().min(1, "Availability date required"),
+    roomType: z.string().min(1, "Room type required"),
   }),
   z.object({
     images: z.array(z.any()).min(1, "At least one image required"),
@@ -39,6 +43,8 @@ const stepSchemas = [
       wifi: z.boolean(),
       ac: z.boolean(),
       parking: z.boolean(),
+      furnished: z.boolean(),
+      washingMachine: z.boolean(),
     }),
   }),
   z.object({}),
@@ -49,17 +55,26 @@ const defaultForm = {
   description: "",
   location: "",
   rent: 0,
+  deposit: 0,
+  availableFrom: "",
+  roomType: "",
   images: [],
-  amenities: { wifi: false, ac: false, parking: false },
+  amenities: {
+    wifi: false,
+    ac: false,
+    parking: false,
+    furnished: false,
+    washingMachine: false,
+  },
 };
 
 export function PostRoom() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(defaultForm);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState({});
   const [isConfirmed, setIsConfirmed] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (name.includes("amenities.")) {
       const key = name.split(".")[1];
@@ -75,7 +90,7 @@ export function PostRoom() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     setForm((prev) => ({ ...prev, images: files }));
   };
@@ -84,7 +99,7 @@ export function PostRoom() {
     const schema = stepSchemas[step];
     const result = schema.safeParse(form);
     if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
+      const fieldErrors = {};
       result.error.errors.forEach((err) => {
         const field = err.path.join(".");
         fieldErrors[field] = err.message;
@@ -115,92 +130,100 @@ export function PostRoom() {
 
   const handleConfirm = () => {
     setIsConfirmed(true);
+    setStep((prev) => prev + 1);
   };
-
-  const renderImages = () => (
-    <Grid container spacing={3} sx={{ mt: 2 }}>
-      {form.images.map((file, index) => (
-        <Grid item key={index}>
-          <Avatar
-            variant="rounded"
-            src={URL.createObjectURL(file)}
-            sx={{
-              width: 100,
-              height: 100,
-              border: "3px solid #1976d2",
-            }}
-          />
-        </Grid>
-      ))}
-    </Grid>
-  );
 
   const getStepContent = () => {
     switch (step) {
       case 0:
         return (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
+          <Stack spacing={3}>
+            <TextField
+              label="Room Title"
+              name="title"
+              fullWidth
+              value={form.title}
+              onChange={handleChange}
+              error={!!errors.title}
+              helperText={errors.title}
+              variant="outlined"
+            />
+            <TextField
+              label="Description"
+              name="description"
+              fullWidth
+              multiline
+              rows={4}
+              value={form.description}
+              onChange={handleChange}
+              error={!!errors.description}
+              helperText={errors.description}
+              variant="outlined"
+            />
+            <TextField
+              label="Location"
+              name="location"
+              fullWidth
+              value={form.location}
+              onChange={handleChange}
+              error={!!errors.location}
+              helperText={errors.location}
+              variant="outlined"
+            />
+            <Box display="flex" gap={2} flexWrap="wrap">
               <TextField
-                label="Room Title"
-                name="title"
-                fullWidth
-                value={form.title}
-                onChange={handleChange}
-                error={!!errors.title}
-                helperText={errors.title}
-                color="primary"
-                variant="outlined"
-                focused
-                size="medium"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                name="description"
-                fullWidth
-                multiline
-                rows={4}
-                value={form.description}
-                onChange={handleChange}
-                error={!!errors.description}
-                helperText={errors.description}
-                color="primary"
-                variant="outlined"
-                size="medium"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Location"
-                name="location"
-                fullWidth
-                value={form.location}
-                onChange={handleChange}
-                error={!!errors.location}
-                helperText={errors.location}
-                color="primary"
-                variant="outlined"
-                size="medium"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                type="number"
-                label="Monthly Rent (₹)"
+                label="Rent (₹)"
                 name="rent"
-                fullWidth
+                type="number"
                 value={form.rent}
                 onChange={handleChange}
                 error={!!errors.rent}
                 helperText={errors.rent}
-                color="primary"
+                sx={{ flex: 1 }}
                 variant="outlined"
-                size="medium"
               />
-            </Grid>
-          </Grid>
+              <TextField
+                label="Deposit (₹)"
+                name="deposit"
+                type="number"
+                value={form.deposit}
+                onChange={handleChange}
+                error={!!errors.deposit}
+                helperText={errors.deposit}
+                sx={{ flex: 1 }}
+                variant="outlined"
+              />
+            </Box>
+            <Box display="flex" gap={2} flexWrap="wrap">
+              <TextField
+                label="Available From"
+                name="availableFrom"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                value={form.availableFrom}
+                onChange={handleChange}
+                error={!!errors.availableFrom}
+                helperText={errors.availableFrom}
+                sx={{ flex: 1 }}
+                variant="outlined"
+              />
+              <TextField
+                select
+                label="Room Type"
+                name="roomType"
+                value={form.roomType}
+                onChange={handleChange}
+                error={!!errors.roomType}
+                helperText={errors.roomType}
+                sx={{ flex: 1 }}
+                variant="outlined"
+              >
+                <MenuItem value="single">Single</MenuItem>
+                <MenuItem value="shared">Shared</MenuItem>
+                <MenuItem value="apartment">Apartment</MenuItem>
+              </TextField>
+            </Box>
+          </Stack>
         );
       case 1:
         return (
@@ -208,8 +231,7 @@ export function PostRoom() {
             <Button
               variant="contained"
               component="label"
-              color="primary"
-              size="large"
+              sx={{ marginBottom: 2 }}
             >
               Upload Images
               <input
@@ -221,31 +243,48 @@ export function PostRoom() {
               />
             </Button>
             {errors.images && (
-              <Typography color="error" mt={2} fontSize="1.2rem">
+              <Typography
+                color="error"
+                variant="body2"
+                sx={{ marginBottom: 2 }}
+              >
                 {errors.images}
               </Typography>
             )}
-            {form.images.length > 0 && renderImages()}
+            <Grid container spacing={2}>
+              {form.images.map((file, index) => (
+                <Grid item key={index}>
+                  <Avatar
+                    src={URL.createObjectURL(file)}
+                    variant="rounded"
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      border: "2px solid #fff",
+                      boxShadow: 3,
+                    }}
+                  />
+                </Grid>
+              ))}
+            </Grid>
           </Box>
         );
       case 2:
         return (
-          <Grid container spacing={3}>
-            {["wifi", "ac", "parking"].map((key) => (
-              <Grid item xs={12} sm={4} key={key}>
+          <Grid container spacing={2}>
+            {Object.keys(form.amenities).map((key) => (
+              <Grid item xs={6} sm={4} key={key}>
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={
-                        form.amenities[key as keyof typeof form.amenities]
-                      }
-                      onChange={handleChange}
                       name={`amenities.${key}`}
-                      color="primary"
+                      checked={form.amenities[key]}
+                      onChange={handleChange}
                     />
                   }
-                  label={key.toUpperCase()}
-                  sx={{ fontSize: "1.2rem" }}
+                  label={key
+                    .replace(/([A-Z])/g, " $1")
+                    .replace(/^./, (s) => s.toUpperCase())}
                 />
               </Grid>
             ))}
@@ -255,54 +294,44 @@ export function PostRoom() {
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              Please confirm your details:
+              Confirm Your Room Details
             </Typography>
-            <Paper variant="outlined" sx={{ p: 3, backgroundColor: "#f9f9f9" }}>
-              <Typography variant="body1">
-                <strong>Title: </strong> {form.title}
+            <Paper variant="outlined" sx={{ p: 3, boxShadow: 3 }}>
+              <Typography>
+                <strong>Title:</strong> {form.title}
               </Typography>
-              <Typography variant="body1">
-                <strong>Description: </strong> {form.description}
+              <Typography>
+                <strong>Description:</strong> {form.description}
               </Typography>
-              <Typography variant="body1">
-                <strong>Location: </strong> {form.location}
+              <Typography>
+                <strong>Location:</strong> {form.location}
               </Typography>
-              <Typography variant="body1">
-                <strong>Rent: </strong> ₹{form.rent}
+              <Typography>
+                <strong>Rent:</strong> ₹{form.rent}
               </Typography>
-              <Typography variant="body1">
-                <strong>Amenities: </strong>
+              <Typography>
+                <strong>Deposit:</strong> ₹{form.deposit}
+              </Typography>
+              <Typography>
+                <strong>Available From:</strong> {form.availableFrom}
+              </Typography>
+              <Typography>
+                <strong>Room Type:</strong> {form.roomType}
+              </Typography>
+              <Typography>
+                <strong>Amenities:</strong>{" "}
                 {Object.entries(form.amenities)
-                  .filter(([key, value]) => value)
-                  .map(([key]) => key.toUpperCase())
+                  .filter(([_, v]) => v)
+                  .map(([k]) => k)
                   .join(", ")}
               </Typography>
-              <Grid container spacing={3} sx={{ mt: 3 }}>
-                {form.images.map((file, index) => (
-                  <Grid item key={index}>
-                    <Avatar
-                      variant="rounded"
-                      src={URL.createObjectURL(file)}
-                      sx={{ width: 100, height: 100 }}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
             </Paper>
-            <Box display="flex" justifyContent="space-between" sx={{ mt: 3 }}>
+            <Box mt={2} textAlign="center">
               <Button
                 variant="contained"
-                color="secondary"
-                onClick={handleBack}
-                size="large"
-              >
-                Back
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
                 onClick={handleConfirm}
-                size="large"
+                color="primary"
+                sx={{ marginRight: 2 }}
               >
                 Confirm
               </Button>
@@ -310,108 +339,106 @@ export function PostRoom() {
           </Box>
         );
       default:
-        return "Unknown step";
+        return null;
     }
   };
 
   return (
     <Box
       sx={{
+        mt: 6,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        mt: 6,
       }}
     >
-      <Card sx={{ width: "100%", maxWidth: 800, mb: 4, boxShadow: 4 }}>
+      <Card
+        sx={{
+          width: "100%",
+          maxWidth: 800,
+          mb: 4,
+          borderRadius: 2,
+          boxShadow: 3,
+        }}
+      >
         <CardContent>
-          <Stepper activeStep={step} alternativeLabel>
+          <Stepper
+            activeStep={step}
+            alternativeLabel
+            sx={{
+              "& .MuiStepConnector-line": {
+                borderColor: "divider",
+              },
+              "& .MuiStepConnector-root.Mui-active .MuiStepConnector-line": {
+                borderColor: "primary.main",
+              },
+              "& .MuiStepConnector-root.Mui-completed .MuiStepConnector-line": {
+                borderColor: "primary.main",
+              },
+            }}
+          >
             {steps.map((label) => (
               <Step key={label}>
-                <StepLabel sx={{ fontSize: "1.5rem" }}>{label}</StepLabel>
+                <StepLabel>{label}</StepLabel>
               </Step>
             ))}
           </Stepper>
         </CardContent>
       </Card>
-
-      <Card sx={{ width: "100%", maxWidth: 800, boxShadow: 4 }}>
+      <Card
+        sx={{ width: "100%", maxWidth: 800, borderRadius: 2, boxShadow: 3 }}
+      >
         <CardContent>
           <motion.div
             key={step}
             initial={{ opacity: 0, x: -100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4 }}
           >
             {step < steps.length ? (
               <>
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 4,
-                    borderRadius: 3,
-                    mb: 3,
-                    backgroundColor:
-                      step === 0
-                        ? "#e3f2fd"
-                        : step === 1
-                        ? "#fce4ec"
-                        : "#e8f5e9",
-                  }}
-                >
-                  {getStepContent()}
-                </Paper>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  sx={{ mt: 3 }}
-                >
+                {getStepContent()}
+                <Box display="flex" justifyContent="space-between" mt={3}>
                   <Button
-                    variant="outlined"
                     onClick={handleBack}
                     disabled={step === 0}
-                    size="large"
+                    variant="outlined"
                   >
                     Back
                   </Button>
                   <Button
-                    variant="contained"
                     onClick={handleNext}
+                    variant="contained"
                     color="primary"
                     disabled={step === steps.length - 1}
-                    size="large"
                   >
                     Next
                   </Button>
                 </Box>
               </>
             ) : (
-              <Box textAlign="center" mt={4}>
-                <CheckCircleOutline
-                  color="success"
-                  sx={{ fontSize: 80, mb: 2 }}
-                />
-                <Typography variant="h5" color="success.main" gutterBottom>
+              <Box textAlign="center">
+                <CheckCircleOutline color="success" sx={{ fontSize: 60 }} />
+                <Typography variant="h6" color="success.main" gutterBottom>
                   All steps completed — ready to submit!
                 </Typography>
-                <Button
-                  onClick={handleSubmit}
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  sx={{ mr: 3 }}
-                >
-                  Submit
-                </Button>
-                <Button
-                  onClick={handleReset}
-                  variant="outlined"
-                  color="secondary"
-                  size="large"
-                >
-                  Reset
-                </Button>
+                <Box display="flex" justifyContent="center" gap={2} mt={2}>
+                  <Button
+                    onClick={handleSubmit}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Submit
+                  </Button>
+                  <Button
+                    onClick={handleReset}
+                    variant="outlined"
+                    color="secondary"
+                  >
+                    Reset
+                  </Button>
+                </Box>
               </Box>
             )}
           </motion.div>
