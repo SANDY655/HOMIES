@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { Wifi, Car, Home, CheckCircle, Snowflake } from "lucide-react";
-import { createRoute, type RootRoute } from "@tanstack/react-router";
+import { createRoute, redirect, RootRoute } from "@tanstack/react-router";
 
 // Define Room type
 interface Room {
@@ -26,7 +26,6 @@ interface Room {
 
 export function SearchRoom() {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [priceFilter, setPriceFilter] = useState("all");
   const [roomTypeFilter, setRoomTypeFilter] = useState("all");
@@ -41,56 +40,53 @@ export function SearchRoom() {
         const json = await res.json();
         const roomsData = Array.isArray(json.data) ? json.data : [];
         setRooms(roomsData);
-        setFilteredRooms(roomsData);
       } catch (err) {
         console.error("Failed to fetch rooms:", err);
         setRooms([]);
-        setFilteredRooms([]);
       }
     };
     fetchRooms();
   }, []);
 
-  // Filter rooms whenever the search query or any filters change
-  useEffect(() => {
-    let filtered = rooms.filter(
+  // Filter rooms directly from the rooms state whenever search query or filters change
+  const filteredRooms = rooms
+    .filter(
       (room) =>
         room.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         room.location.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    )
+    .filter((room) => {
+      // Price filter
+      if (priceFilter !== "all") {
+        const max = parseInt(priceFilter);
+        if (room.rent > max) return false;
+      }
 
-    if (priceFilter !== "all") {
-      const max = parseInt(priceFilter);
-      filtered = filtered.filter((room) => room.rent <= max);
-    }
+      // Room type filter
+      if (roomTypeFilter !== "all" && room.roomType !== roomTypeFilter) {
+        return false;
+      }
 
-    if (roomTypeFilter !== "all") {
-      filtered = filtered.filter((room) => room.roomType === roomTypeFilter);
-    }
+      // Available from date filter
+      if (
+        availableFrom &&
+        new Date(room.availableFrom) < new Date(availableFrom)
+      ) {
+        return false;
+      }
 
-    if (availableFrom) {
-      filtered = filtered.filter(
-        (room) => new Date(room.availableFrom) >= new Date(availableFrom)
-      );
-    }
-
-    if (amenityFilters.length > 0) {
-      filtered = filtered.filter((room) =>
-        amenityFilters.every(
+      // Amenity filters
+      if (
+        amenityFilters.length > 0 &&
+        !amenityFilters.every(
           (amenity) => room.amenities[amenity as keyof Room["amenities"]]
         )
-      );
-    }
+      ) {
+        return false;
+      }
 
-    setFilteredRooms(filtered);
-  }, [
-    searchQuery,
-    priceFilter,
-    roomTypeFilter,
-    amenityFilters,
-    availableFrom,
-    rooms, // The `rooms` array needs to be in dependencies to trigger filtering when it changes
-  ]);
+      return true;
+    });
 
   const toggleAmenity = (amenity: string) => {
     setAmenityFilters((prev) =>
@@ -114,11 +110,7 @@ export function SearchRoom() {
 
       if (data.success) {
         const newRoom = data.data;
-        setRooms((prevRooms) => {
-          const updatedRooms = [...prevRooms, newRoom]; // Optimistically update rooms state
-          setFilteredRooms(updatedRooms); // Immediately update filtered rooms as well
-          return updatedRooms;
-        });
+        setRooms((prevRooms) => [...prevRooms, newRoom]); // Add new room to rooms state
       } else {
         console.error("Failed to add room:", data.message);
       }
