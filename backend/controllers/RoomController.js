@@ -68,4 +68,22 @@ async function postroom(req, res) {
     });
   }
 }
-module.exports = { postroom };
+async function searchroom(req, res) {
+  try {
+    const rooms = await RoomModel.find({})
+      .collation({ locale: "en", strength: 2 }) // 'strength: 2' is case-insensitive
+      .sort({ title: 1 });
+    res.status(200).json({
+      data: rooms,
+      error: false,
+      success: true,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+}
+module.exports = { postroom, searchroom };

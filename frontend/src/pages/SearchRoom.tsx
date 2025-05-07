@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { Wifi, AirConditioner, Car, Home, CheckCircle } from "lucide-react";
-import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
+import { Wifi, Car, Home, CheckCircle, Snowflake } from "lucide-react";
+import { createRoute, type RootRoute } from "@tanstack/react-router";
 
-type Room = {
-  id: string;
+// Define Room type
+interface Room {
+  _id: string;
   title: string;
   description: string;
   location: string;
@@ -21,7 +22,7 @@ type Room = {
     furnished: boolean;
     washingMachine: boolean;
   };
-};
+}
 
 export function SearchRoom() {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -32,68 +33,25 @@ export function SearchRoom() {
   const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
   const [availableFrom, setAvailableFrom] = useState("");
 
-  const dummyRooms: Room[] = [
-    {
-      id: "1",
-      title: "Cozy Single Room",
-      description: "A nice and cozy room in the city center.",
-      location: "Chennai",
-      rent: 3000,
-      deposit: 5000,
-      availableFrom: "2025-05-10",
-      roomType: "single",
-      images: ["https://via.placeholder.com/300x200?text=Room+1"],
-      amenities: {
-        wifi: true,
-        ac: false,
-        parking: true,
-        furnished: true,
-        washingMachine: false,
-      },
-    },
-    {
-      id: "2",
-      title: "Shared Room near University",
-      description: "Perfect for students.",
-      location: "Coimbatore",
-      rent: 2500,
-      deposit: 4000,
-      availableFrom: "2025-05-15",
-      roomType: "shared",
-      images: ["https://via.placeholder.com/300x200?text=Room+2"],
-      amenities: {
-        wifi: true,
-        ac: true,
-        parking: false,
-        furnished: true,
-        washingMachine: true,
-      },
-    },
-    {
-      id: "3",
-      title: "Furnished Apartment",
-      description: "Fully furnished 2BHK apartment.",
-      location: "Bangalore",
-      rent: 6000,
-      deposit: 10000,
-      availableFrom: "2025-06-01",
-      roomType: "apartment",
-      images: ["https://via.placeholder.com/300x200?text=Room+3"],
-      amenities: {
-        wifi: true,
-        ac: true,
-        parking: true,
-        furnished: true,
-        washingMachine: true,
-      },
-    },
-  ];
-
+  // Fetch rooms from backend
   useEffect(() => {
-    setRooms(dummyRooms);
-    setFilteredRooms(dummyRooms);
+    const fetchRooms = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/room/searchroom");
+        const json = await res.json();
+        const roomsData = Array.isArray(json.data) ? json.data : [];
+        setRooms(roomsData);
+        setFilteredRooms(roomsData);
+      } catch (err) {
+        console.error("Failed to fetch rooms:", err);
+        setRooms([]);
+        setFilteredRooms([]);
+      }
+    };
+    fetchRooms();
   }, []);
 
+  // Filter rooms whenever the search query or any filters change
   useEffect(() => {
     let filtered = rooms.filter(
       (room) =>
@@ -131,7 +89,7 @@ export function SearchRoom() {
     roomTypeFilter,
     amenityFilters,
     availableFrom,
-    rooms,
+    rooms, // The `rooms` array needs to be in dependencies to trigger filtering when it changes
   ]);
 
   const toggleAmenity = (amenity: string) => {
@@ -140,6 +98,33 @@ export function SearchRoom() {
         ? prev.filter((a) => a !== amenity)
         : [...prev, amenity]
     );
+  };
+
+  // Post room function to add a new room
+  const postRoom = async (newRoomData) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/room/postroom", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newRoomData),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        const newRoom = data.data;
+        setRooms((prevRooms) => {
+          const updatedRooms = [...prevRooms, newRoom]; // Optimistically update rooms state
+          setFilteredRooms(updatedRooms); // Immediately update filtered rooms as well
+          return updatedRooms;
+        });
+      } else {
+        console.error("Failed to add room:", data.message);
+      }
+    } catch (error) {
+      console.error("Error adding room:", error);
+    }
   };
 
   return (
@@ -188,26 +173,26 @@ export function SearchRoom() {
 
           <div className="text-sm font-medium mb-2">Amenities:</div>
           <div className="flex flex-wrap gap-2">
-            {["wifi", "ac", "parking", "furnished", "washingMachine"].map(
-              (amenity) => (
-                <button
-                  key={amenity}
-                  className={`text-xs px-3 py-1 rounded-full border ${
-                    amenityFilters.includes(amenity)
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                  onClick={() => toggleAmenity(amenity)}
-                >
-                  {amenity === "wifi" && <Wifi size={16} />}
-                  {amenity === "ac" && <AirConditioner size={16} />}
-                  {amenity === "parking" && <Car size={16} />}
-                  {amenity === "furnished" && <Home size={16} />}
-                  {amenity === "washingMachine" && <CheckCircle size={16} />}
-                  {amenity}
-                </button>
-              )
-            )}
+            {[
+              { key: "wifi", icon: <Wifi size={16} /> },
+              { key: "ac", icon: <Snowflake size={16} /> },
+              { key: "parking", icon: <Car size={16} /> },
+              { key: "furnished", icon: <Home size={16} /> },
+              { key: "washingMachine", icon: <CheckCircle size={16} /> },
+            ].map(({ key, icon }) => (
+              <button
+                key={key}
+                className={`text-xs px-3 py-1 rounded-full border flex items-center gap-1 ${
+                  amenityFilters.includes(key)
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+                onClick={() => toggleAmenity(key)}
+              >
+                {icon}
+                {key}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -224,7 +209,7 @@ export function SearchRoom() {
               <AnimatePresence>
                 {filteredRooms.map((room) => (
                   <motion.div
-                    key={room.id}
+                    key={room._id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
@@ -233,7 +218,10 @@ export function SearchRoom() {
                     className="bg-white rounded-xl shadow-lg border hover:shadow-xl overflow-hidden"
                   >
                     <img
-                      src={room.images[0]}
+                      src={
+                        room.images[0] ||
+                        "https://via.placeholder.com/300x200?text=Room"
+                      }
                       alt={room.title}
                       className="w-full h-48 object-cover"
                     />
