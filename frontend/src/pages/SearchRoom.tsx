@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { Wifi, Car, Home, CheckCircle, Snowflake } from "lucide-react";
 import { createRoute, Link, redirect, RootRoute } from "@tanstack/react-router";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInView } from "react-intersection-observer";
 
 // Define Room type
 interface Room {
@@ -25,31 +27,55 @@ interface Room {
 }
 
 export function SearchRoom() {
-  const [rooms, setRooms] = useState<Room[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [priceFilter, setPriceFilter] = useState("all");
   const [roomTypeFilter, setRoomTypeFilter] = useState("all");
   const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
   const [availableFrom, setAvailableFrom] = useState("");
 
-  // Fetch rooms from backend
-  useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/room/searchroom");
-        const json = await res.json();
-        const roomsData = Array.isArray(json.data) ? json.data : [];
-        setRooms(roomsData);
-      } catch (err) {
-        console.error("Failed to fetch rooms:", err);
-        setRooms([]);
-      }
-    };
-    fetchRooms();
-  }, []);
+  // Tanstack Query for infinite scrolling
+  const { ref, inView } = useInView();
+  const fetchRooms = async ({ pageParam }: { pageParam: number }) => {
+    const res = await fetch(
+      `http://localhost:5000/api/room/searchroom?_page=${pageParam}&_limit=10`
+    );
+    const json = await res.json();
+    return json.data;
+  };
 
-  // Filter rooms directly from the rooms state whenever search query or filters change
-  const filteredRooms = rooms
+  const {
+    data,
+    status,
+    error,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["rooms"],
+    queryFn: fetchRooms,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const nextPage = lastPage.length ? allPages.length + 1 : undefined;
+      return nextPage;
+    },
+  });
+
+  useEffect(() => {
+    if (inView && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, fetchNextPage]);
+
+  if (status === "pending") {
+    return <p>Loading...</p>;
+  }
+  if (status === "error") {
+    return <p>Error: {error.message}</p>;
+  }
+
+  // Filters
+  const filteredRooms = data?.pages
+    .flat()
     .filter(
       (room) =>
         room.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,8 +121,6 @@ export function SearchRoom() {
         : [...prev, amenity]
     );
   };
-
-  // Post room function to add a new room
 
   return (
     <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
@@ -173,7 +197,7 @@ export function SearchRoom() {
             Available Rooms
           </h1>
 
-          {filteredRooms.length === 0 ? (
+          {filteredRooms?.length === 0 ? (
             <div className="text-gray-500">No rooms found.</div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -224,6 +248,28 @@ export function SearchRoom() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Load More Button */}
+      <div className="flex justify-center mt-6">
+        <button
+          ref={ref}
+          disabled={!hasNextPage || isFetchingNextPage}
+          onClick={() => fetchNextPage()}
+          className={`px-6 py-2 text-white font-semibold rounded-lg ${
+            isFetchingNextPage
+              ? "bg-gray-400"
+              : hasNextPage
+              ? "bg-blue-600 hover:bg-blue-700"
+              : "bg-gray-300 cursor-not-allowed"
+          }`}
+        >
+          {isFetchingNextPage
+            ? "Loading more..."
+            : hasNextPage
+            ? "Load More"
+            : "No more rooms"}
+        </button>
       </div>
     </div>
   );
