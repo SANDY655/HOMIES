@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { z } from "zod";
 import { CheckCircleOutline } from "@mui/icons-material";
-import { createRoute, type RootRoute } from "@tanstack/react-router";
+import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion"; // Import framer-motion
 
 // Define the steps
