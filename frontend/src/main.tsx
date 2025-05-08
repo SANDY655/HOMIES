@@ -28,13 +28,17 @@ import PostRoomRoute from "./pages/PostRoom.tsx";
 import FindingRoommatesRoute from "./pages/FindRoomates.tsx";
 import SearchRoomRoute from "./pages/SearchRoom.tsx";
 import RoomRoute from "./pages/Room.tsx";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+const queryClient = new QueryClient();
 const rootRoute = createRootRoute({
   component: () => (
     <>
-      <Header />
-      <Outlet />
-      <TanStackRouterDevtools />
-      <TanstackQueryLayout />
+      <QueryClientProvider client={queryClient}>
+        <Header />
+        <Outlet />
+        <TanStackRouterDevtools />
+        <TanstackQueryLayout />
+      </QueryClientProvider>
     </>
   ),
 });

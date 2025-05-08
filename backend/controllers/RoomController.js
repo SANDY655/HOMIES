@@ -70,7 +70,12 @@ async function postroom(req, res) {
 }
 async function searchroom(req, res) {
   try {
-    const rooms = await RoomModel.find({})
+    const page = parseInt(req.query._page) || 1;
+    const limit = parseInt(req.query._limit) || 10;
+    const skip = (page - 1) * limit;
+    const rooms = await RoomModel.find()
+      .skip(skip)
+      .limit(limit)
       .collation({ locale: "en", strength: 2 }) // 'strength: 2' is case-insensitive
       .sort({ title: 1 });
     res.status(200).json({
