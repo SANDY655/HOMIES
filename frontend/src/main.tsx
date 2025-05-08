@@ -27,6 +27,7 @@ import DashboardRoute from "./pages/Dashboard.tsx";
 import PostRoomRoute from "./pages/PostRoom.tsx";
 import FindingRoommatesRoute from "./pages/FindRoomates.tsx";
 import SearchRoomRoute from "./pages/SearchRoom.tsx";
+import RoomRoute from "./pages/Room.tsx";
 const rootRoute = createRootRoute({
   component: () => (
     <>
@@ -54,6 +55,7 @@ const routeTree = rootRoute.addChildren([
   FindingRoommatesRoute(rootRoute),
   DemoTable(rootRoute),
   DemoTanstackQuery(rootRoute),
+  RoomRoute(rootRoute),
 ]);
 
 const router = createRouter({

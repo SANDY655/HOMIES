@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { Wifi, Car, Home, CheckCircle, Snowflake } from "lucide-react";
-import { createRoute, redirect, RootRoute } from "@tanstack/react-router";
+import { createRoute, Link, redirect, RootRoute } from "@tanstack/react-router";
 
 // Define Room type
 interface Room {
@@ -97,27 +97,6 @@ export function SearchRoom() {
   };
 
   // Post room function to add a new room
-  const postRoom = async (newRoomData) => {
-    try {
-      const res = await fetch("http://localhost:5000/api/room/postroom", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newRoomData),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        const newRoom = data.data;
-        setRooms((prevRooms) => [...prevRooms, newRoom]); // Add new room to rooms state
-      } else {
-        console.error("Failed to add room:", data.message);
-      }
-    } catch (error) {
-      console.error("Error adding room:", error);
-    }
-  };
 
   return (
     <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
@@ -200,44 +179,46 @@ export function SearchRoom() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence>
                 {filteredRooms.map((room) => (
-                  <motion.div
-                    key={room._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="bg-white rounded-xl shadow-lg border hover:shadow-xl overflow-hidden"
-                  >
-                    <img
-                      src={
-                        room.images[0] ||
-                        "https://via.placeholder.com/300x200?text=Room"
-                      }
-                      alt={room.title}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold">{room.title}</h3>
-                      <p className="text-sm text-gray-500">{room.location}</p>
-                      <p className="text-blue-600 font-bold text-sm mt-1">
-                        ₹{room.rent} / month
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Available:{" "}
-                        {format(new Date(room.availableFrom), "dd MMM yyyy")}
-                      </p>
-                      <p className="text-xs capitalize text-gray-600">
-                        {room.roomType}
-                      </p>
-                      <p className="text-xs mt-1 text-gray-500">
-                        {Object.entries(room.amenities)
-                          .filter(([_, val]) => val)
-                          .map(([key]) => key)
-                          .join(", ") || "No amenities"}
-                      </p>
-                    </div>
-                  </motion.div>
+                  <Link to={`/rooms/${room._id}`} key={room._id}>
+                    <motion.div
+                      key={room._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="bg-white rounded-xl shadow-lg border hover:shadow-xl overflow-hidden"
+                    >
+                      <img
+                        src={
+                          room.images[0] ||
+                          "https://via.placeholder.com/300x200?text=Room"
+                        }
+                        alt={room.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold">{room.title}</h3>
+                        <p className="text-sm text-gray-500">{room.location}</p>
+                        <p className="text-blue-600 font-bold text-sm mt-1">
+                          ₹{room.rent} / month
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Available:{" "}
+                          {format(new Date(room.availableFrom), "dd MMM yyyy")}
+                        </p>
+                        <p className="text-xs capitalize text-gray-600">
+                          {room.roomType}
+                        </p>
+                        <p className="text-xs mt-1 text-gray-500">
+                          {Object.entries(room.amenities)
+                            .filter(([_, val]) => val)
+                            .map(([key]) => key)
+                            .join(", ") || "No amenities"}
+                        </p>
+                      </div>
+                    </motion.div>
+                  </Link>
                 ))}
               </AnimatePresence>
             </div>
