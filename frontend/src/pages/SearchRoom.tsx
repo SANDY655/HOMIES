@@ -6,7 +6,6 @@ import { createRoute, Link, redirect, RootRoute } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 
-// Define Room type
 interface Room {
   _id: string;
   title: string;
@@ -33,11 +32,20 @@ export function SearchRoom() {
   const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
   const [availableFrom, setAvailableFrom] = useState("");
 
-  // Tanstack Query for infinite scrolling
   const { ref, inView } = useInView();
   const fetchRooms = async ({ pageParam }: { pageParam: number }) => {
+    const params = new URLSearchParams();
+    params.append("_page", pageParam.toString());
+    params.append("_limit", "10");
+    if (searchQuery) params.append("searchQuery", searchQuery);
+    if (priceFilter !== "all") params.append("priceFilter", priceFilter);
+    if (roomTypeFilter !== "all")
+      params.append("roomTypeFilter", roomTypeFilter);
+    if (availableFrom) params.append("availableFrom", availableFrom);
+    amenityFilters.forEach((amenity) => params.append("amenities", amenity));
+
     const res = await fetch(
-      `http://localhost:5000/api/room/searchroom?_page=${pageParam}&_limit=10`
+      `http://localhost:5000/api/room/searchroom?${params.toString()}`
     );
     const json = await res.json();
     return json.data;
@@ -50,15 +58,25 @@ export function SearchRoom() {
     fetchNextPage,
     isFetchingNextPage,
     hasNextPage,
+    refetch,
   } = useInfiniteQuery({
-    queryKey: ["rooms"],
+    queryKey: [
+      "rooms",
+      searchQuery,
+      priceFilter,
+      roomTypeFilter,
+      amenityFilters,
+      availableFrom,
+    ],
     queryFn: fetchRooms,
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) => {
-      const nextPage = lastPage.length ? allPages.length + 1 : undefined;
-      return nextPage;
-    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length ? allPages.length + 1 : undefined,
   });
+
+  useEffect(() => {
+    refetch();
+  }, [searchQuery, priceFilter, roomTypeFilter, amenityFilters, availableFrom]);
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -66,53 +84,8 @@ export function SearchRoom() {
     }
   }, [inView, hasNextPage, fetchNextPage]);
 
-  if (status === "pending") {
-    return <p>Loading...</p>;
-  }
-  if (status === "error") {
-    return <p>Error: {error.message}</p>;
-  }
-
-  // Filters
-  const filteredRooms = data?.pages
-    .flat()
-    .filter(
-      (room) =>
-        room.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        room.location.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .filter((room) => {
-      // Price filter
-      if (priceFilter !== "all") {
-        const max = parseInt(priceFilter);
-        if (room.rent > max) return false;
-      }
-
-      // Room type filter
-      if (roomTypeFilter !== "all" && room.roomType !== roomTypeFilter) {
-        return false;
-      }
-
-      // Available from date filter
-      if (
-        availableFrom &&
-        new Date(room.availableFrom) < new Date(availableFrom)
-      ) {
-        return false;
-      }
-
-      // Amenity filters
-      if (
-        amenityFilters.length > 0 &&
-        !amenityFilters.every(
-          (amenity) => room.amenities[amenity as keyof Room["amenities"]]
-        )
-      ) {
-        return false;
-      }
-
-      return true;
-    });
+  if (status === "pending") return <p>Loading...</p>;
+  if (status === "error") return <p>Error: {error.message}</p>;
 
   const toggleAmenity = (amenity: string) => {
     setAmenityFilters((prev) =>
@@ -125,7 +98,6 @@ export function SearchRoom() {
   return (
     <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-4 gap-8">
-        {/* Filters Sidebar */}
         <div className="bg-white rounded-2xl shadow p-4 lg:sticky top-6 h-fit">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">Filters</h2>
 
@@ -191,18 +163,17 @@ export function SearchRoom() {
           </div>
         </div>
 
-        {/* Room Listings */}
         <div className="lg:col-span-3">
           <h1 className="text-3xl font-bold mb-6 text-gray-800">
             Available Rooms
           </h1>
 
-          {filteredRooms?.length === 0 ? (
+          {data?.pages.flat().length === 0 ? (
             <div className="text-gray-500">No rooms found.</div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence>
-                {filteredRooms.map((room) => (
+                {data?.pages.flat().map((room) => (
                   <Link to={`/rooms/${room._id}`} key={room._id}>
                     <motion.div
                       key={room._id}
@@ -250,7 +221,6 @@ export function SearchRoom() {
         </div>
       </div>
 
-      {/* Load More Button */}
       <div className="flex justify-center mt-6">
         <button
           ref={ref}
