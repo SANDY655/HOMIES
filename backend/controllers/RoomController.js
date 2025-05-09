@@ -73,7 +73,37 @@ async function searchroom(req, res) {
     const page = parseInt(req.query._page) || 1;
     const limit = parseInt(req.query._limit) || 10;
     const skip = (page - 1) * limit;
-    const rooms = await RoomModel.find()
+    const {
+      searchQuery = "",
+      priceFilter,
+      roomTypeFilter,
+      availableFrom,
+      amenities,
+    } = req.query;
+    const query = {};
+    if (searchQuery) {
+      query.$or = [
+        { title: { $regex: searchQuery, $options: "i" } },
+        { location: { $regex: searchQuery, $options: "i" } },
+      ];
+    }
+    if (priceFilter && priceFilter !== "all") {
+      query.rent = { $lte: parseInt(priceFilter) };
+    }
+    if (roomTypeFilter && roomTypeFilter !== "all") {
+      query.roomType = roomTypeFilter;
+    }
+    if (availableFrom) {
+      query.availableFrom = { $gte: new Date(availableFrom) };
+    }
+    if (amenities) {
+      const amenityList = Array.isArray(amenities) ? amenities : [amenities];
+      for (const amenity of amenityList) {
+        query[`amenities.${amenity}`] = true;
+      }
+    }
+
+    const rooms = await RoomModel.find(query)
       .skip(skip)
       .limit(limit)
       .collation({ locale: "en", strength: 2 }) // 'strength: 2' is case-insensitive
