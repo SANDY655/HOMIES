@@ -35,6 +35,7 @@ export function SearchRoom() {
   const { ref, inView } = useInView();
   const fetchRooms = async ({ pageParam }: { pageParam: number }) => {
     const params = new URLSearchParams();
+    const email = localStorage.getItem("email"); // ✅ get user email from localStorage
     params.append("_page", pageParam.toString());
     params.append("_limit", "10");
     if (searchQuery) params.append("searchQuery", searchQuery);
@@ -42,11 +43,13 @@ export function SearchRoom() {
     if (roomTypeFilter !== "all")
       params.append("roomTypeFilter", roomTypeFilter);
     if (availableFrom) params.append("availableFrom", availableFrom);
+    if (email) params.append("email", email); // ✅ pass email
     amenityFilters.forEach((amenity) => params.append("amenities", amenity));
 
     const res = await fetch(
       `http://localhost:5000/api/room/searchroom?${params.toString()}`
     );
+
     const json = await res.json();
     return json.data;
   };
