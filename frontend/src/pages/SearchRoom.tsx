@@ -5,7 +5,7 @@ import { Wifi, Car, Home, CheckCircle, Snowflake } from "lucide-react";
 import { createRoute, Link, redirect, RootRoute } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
-
+import { useDebounce } from "@/hooks/useDebounce";
 interface Room {
   _id: string;
   title: string;
@@ -31,7 +31,7 @@ export function SearchRoom() {
   const [roomTypeFilter, setRoomTypeFilter] = useState("all");
   const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
   const [availableFrom, setAvailableFrom] = useState("");
-
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { ref, inView } = useInView();
   const fetchRooms = async ({ pageParam }: { pageParam: number }) => {
     const params = new URLSearchParams();
@@ -62,7 +62,7 @@ export function SearchRoom() {
   } = useInfiniteQuery({
     queryKey: [
       "rooms",
-      searchQuery,
+      debouncedSearchQuery,
       priceFilter,
       roomTypeFilter,
       amenityFilters,
@@ -76,7 +76,7 @@ export function SearchRoom() {
 
   useEffect(() => {
     refetch();
-  }, [searchQuery, priceFilter, roomTypeFilter, amenityFilters, availableFrom]);
+  }, [priceFilter, roomTypeFilter, amenityFilters, availableFrom]);
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -84,7 +84,6 @@ export function SearchRoom() {
     }
   }, [inView, hasNextPage, fetchNextPage]);
 
-  if (status === "pending") return <p>Loading...</p>;
   if (status === "error") return <p>Error: {error.message}</p>;
 
   const toggleAmenity = (amenity: string) => {
