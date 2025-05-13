@@ -2,18 +2,12 @@ import { createRoute, RootRoute, useParams } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 interface Message {
-  _id: string;
+  id: string;
   text: string;
-  sender: {
-    _id: string;
-    email: string;
-  };
+  sender: "user" | "owner";
+  senderEmail: string;
+  receiverEmail: string;
   timestamp: string;
-}
-
-interface ChatResponse {
-  _id: string;
-  members: { _id: string; email: string }[];
 }
 
 export function Chat() {
@@ -21,39 +15,41 @@ export function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [chatId, setChatId] = useState<string | null>(null);
-  const [chatMembers, setChatMembers] = useState<string[]>([]);
+  const [receiverEmail, setReceiverEmail] = useState<string>("");
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const rawEmail = localStorage.getItem("email") ?? "unknown@user.com";
-  const senderEmail = rawEmail.replace(/^"|"$/g, "");
+  const senderEmail = rawEmail.replace(/^"|"$/g, ""); // Strip quotes if any
 
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        // 1. Get room owner by roomId
+        // Step 1: Get room data to identify receiver
         const resRoom = await fetch(`http://localhost:5000/api/room/${roomId}`);
         const roomData = await resRoom.json();
+
         if (!roomData.success) throw new Error("Room fetch failed");
 
-        const receiverEmail = roomData.data.email;
+        const receiver = roomData.data.email;
+        setReceiverEmail(receiver);
 
-        // 2. Fetch both users
+        // Step 2: Fetch sender and receiver user data by email
         const senderRes = await fetch(
           `http://localhost:5000/api/user/by-email?email=${senderEmail}`
         );
         const receiverRes = await fetch(
-          `http://localhost:5000/api/user/by-email?email=${receiverEmail}`
+          `http://localhost:5000/api/user/by-email?email=${receiver}`
         );
 
         const senderUser = await senderRes.json();
         const receiverUser = await receiverRes.json();
 
         if (!senderUser?.data?._id || !receiverUser?.data?._id) {
-          throw new Error("User(s) not found");
+          throw new Error("One or both users not found");
         }
 
-        // 3. Start or get chat
+        // Step 3: Start the chat session
         const chatRes = await fetch("http://localhost:5000/api/chat/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -64,24 +60,17 @@ export function Chat() {
           }),
         });
 
-        const chatData: { chat: ChatResponse } = await chatRes.json();
+        const chatData = await chatRes.json();
         setChatId(chatData.chat._id);
 
-        const emails = chatData.chat.members.map((m) => m.email);
-        setChatMembers(emails);
-
-        // 4. Get messages
+        // Step 4: Fetch existing messages
         const msgRes = await fetch(
           `http://localhost:5000/api/chat/messages/${chatData.chat._id}`
         );
-        // Update this block
         const msgData = await msgRes.json();
-        if (msgData.success && Array.isArray(msgData.messages)) {
-          setMessages(msgData.messages);
-        } else {
-          setMessages([]); // Fallback to empty array
-          console.error("Unexpected messages response:", msgData);
-        }
+
+        // Ensure messages is an array, even if the response is empty or malformed
+        setMessages(msgData?.messages || []);
       } catch (err) {
         console.error("Chat initialization failed:", err);
       }
@@ -99,7 +88,9 @@ export function Chat() {
       );
       const senderUser = await senderRes.json();
 
-      if (!senderUser?.data?._id) throw new Error("Sender not found");
+      if (!senderUser?.data?._id) {
+        throw new Error("Sender not found");
+      }
 
       const newMsg = {
         chatId,
@@ -132,66 +123,56 @@ export function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const formatTimestamp = (timestamp: string) => {
-    const parsed = Date.parse(timestamp);
-    if (!isNaN(parsed)) {
-      return new Date(parsed).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
-    return "Invalid Date";
-  };
-
-  const otherEmail = chatMembers.find((email) => email !== senderEmail);
-
   return (
     <div className="w-full min-h-screen flex justify-center items-center bg-gradient-to-br from-blue-100 to-gray-200">
       <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-blue-700 text-white px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <h2 className="text-xl font-semibold">
-            Chat with {otherEmail || "Loading..."}
-          </h2>
+          <h2 className="text-xl font-semibold">Chat with Room Owner</h2>
           <div className="text-sm">
             <p>
               <span className="font-medium">You:</span> {senderEmail}
             </p>
             <p>
-              <span className="font-medium">Other:</span>{" "}
-              {otherEmail || "loading..."}
+              <span className="font-medium">Owner:</span>{" "}
+              {receiverEmail ? receiverEmail : "loading..."}
             </p>
           </div>
         </div>
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-          {messages.map((msg) => (
-            <div
-              key={msg._id}
-              className={`flex ${
-                msg.sender.email === senderEmail
-                  ? "justify-end"
-                  : "justify-start"
-              }`}
-            >
+          {Array.isArray(messages) && messages.length > 0 ? (
+            messages.map((msg) => (
               <div
-                className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md text-sm relative ${
-                  msg.sender.email === senderEmail
-                    ? "bg-blue-600 text-white rounded-br-none"
-                    : "bg-white text-gray-800 border rounded-bl-none"
+                key={msg.id}
+                className={`flex ${
+                  msg.sender === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                <div className="text-[11px] mb-1 opacity-80">
-                  {msg.sender.email}
-                </div>
-                {msg.text}
-                <div className="text-[10px] text-right mt-1 opacity-60">
-                  {formatTimestamp(msg.timestamp)}
+                <div
+                  className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md text-sm relative ${
+                    msg.sender === "user"
+                      ? "bg-blue-600 text-white rounded-br-none"
+                      : "bg-white text-gray-800 border rounded-bl-none"
+                  }`}
+                >
+                  <div className="text-[11px] mb-1 opacity-80">
+                    {msg.senderEmail}
+                  </div>
+                  {msg.text}
+                  <div className="text-[10px] text-right mt-1 opacity-60">
+                    {new Date(msg.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div>No messages available.</div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
