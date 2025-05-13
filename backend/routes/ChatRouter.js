@@ -1,17 +1,16 @@
 const express = require("express");
 const {
   startChat,
-  getChats,
   sendMessage,
   getMessages,
+  getChats,
 } = require("../controllers/ChatController");
 
 const ChatRouter = express.Router();
 
-// Chat routes
 ChatRouter.post("/start", startChat);
-ChatRouter.post("/send", sendMessage); // ✅ Add this
-ChatRouter.get("/messages/:chatId", getMessages); // ✅ Add this
+ChatRouter.post("/send", sendMessage);
+ChatRouter.get("/messages/:chatId", getMessages);
 ChatRouter.get("/user/:userId", getChats);
 
 module.exports = { ChatRouter };

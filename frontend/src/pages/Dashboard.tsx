@@ -4,7 +4,7 @@ import {
   RootRoute,
   useNavigate,
 } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -18,7 +18,36 @@ import { Heading } from "@/components/ui/heading";
 
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
+  const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
+
+  const [chats, setChats] = useState([]);
+  const [loadingChats, setLoadingChats] = useState(true);
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        console.log("Fetching chats for user:", userId);
+        const res = await fetch(`http://localhost:5000/api/chat/${userId}`);
+        console.log("Response status:", res.status);
+
+        const data = await res.json();
+        console.log("Fetched data:", data);
+
+        if (data.success) {
+          setChats(data.chats);
+        } else {
+          console.error("Error from server:", data.message);
+        }
+      } catch (err) {
+        console.error("Fetch failed:", err);
+      } finally {
+        setLoadingChats(false);
+      }
+    };
+
+    if (userId) fetchChats();
+  }, [userId]);
 
   const handleLogout = async () => {
     try {
@@ -36,6 +65,7 @@ export function Dashboard() {
       if (response.ok) {
         localStorage.removeItem("token");
         localStorage.removeItem("email");
+        localStorage.removeItem("userId");
         navigate({ to: "/" });
       } else {
         alert(result.message || "Logout failed");
@@ -46,17 +76,9 @@ export function Dashboard() {
     }
   };
 
-  const handleRoomPosting = () => {
-    navigate({ to: "/post-room" });
-  };
-
-  const handleFindRoommates = () => {
-    navigate({ to: "/find-roommates" });
-  };
-
-  const handleSearchRooms = () => {
-    navigate({ to: "/search-rooms" });
-  };
+  const handleRoomPosting = () => navigate({ to: "/post-room" });
+  const handleFindRoommates = () => navigate({ to: "/find-roommates" });
+  const handleSearchRooms = () => navigate({ to: "/search-rooms" });
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 md:px-10">
@@ -88,7 +110,7 @@ export function Dashboard() {
             </CardHeader>
           </Card>
 
-          {/* Quick Actions Card */}
+          {/* Quick Actions */}
           <Card className="rounded-lg bg-white shadow-md">
             <CardHeader>
               <CardTitle className="text-xl text-gray-800">
@@ -121,9 +143,8 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Room Features Section */}
+        {/* Room Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Post Room Card */}
           <Card className="rounded-lg bg-white shadow-md">
             <CardHeader>
               <CardTitle className="text-xl text-gray-800">
@@ -144,7 +165,6 @@ export function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Search Rooms Card */}
           <Card className="rounded-lg bg-white shadow-md">
             <CardHeader>
               <CardTitle className="text-xl text-gray-800">
@@ -165,7 +185,6 @@ export function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Find Roommates Card */}
           <Card className="rounded-lg bg-white shadow-md">
             <CardHeader>
               <CardTitle className="text-xl text-gray-800">
@@ -202,6 +221,39 @@ export function Dashboard() {
               This section can include metrics, recent activity, or other useful
               insights.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Chat List Section */}
+        <Card className="rounded-lg bg-white shadow-md">
+          <CardHeader>
+            <CardTitle className="text-xl text-gray-800">Your Chats</CardTitle>
+            <CardDescription className="text-sm text-gray-500">
+              View conversations with owners or users.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingChats ? (
+              <p className="text-gray-500">Loading chats...</p>
+            ) : chats.length === 0 ? (
+              <p className="text-gray-500">No chats found.</p>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {chats.map((chat) => {
+                  const otherUser = chat.members.find((m) => m._id !== userId);
+                  return (
+                    <li key={chat._id} className="py-3">
+                      <div className="text-gray-800 font-medium">
+                        {otherUser?.email || "Unknown"}
+                      </div>
+                      <div className="text-gray-500 text-sm">
+                        {chat.latestMessage?.text || "No messages yet"}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
