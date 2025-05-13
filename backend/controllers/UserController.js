@@ -135,4 +135,19 @@ async function logout(req, res) {
     });
   }
 }
-module.exports = { register, login, logout };
+async function getUserByEmail(req, res) {
+  const { email } = req.query;
+  try {
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "User not found", success: false });
+    }
+    return res.json({ data: user, success: true });
+  } catch (error) {
+    return res.status(500).json({ message: error.message, success: false });
+  }
+}
+
+module.exports = { register, login, logout, getUserByEmail };

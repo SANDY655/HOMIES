@@ -40,15 +40,31 @@ async function sendMessage(req, res) {
       success: false,
     });
   }
+
   try {
     const message = await MessageModel.create({
       chatId,
       sender: senderId,
       text,
     });
+
     await ChatModel.findByIdAndUpdate(chatId, { latestMessage: message._id });
+
+    const populatedMessage = await message.populate("sender", "email");
+    const chat = await ChatModel.findById(chatId).populate("members", "email");
+
+    const receiver = chat.members.find(
+      (member) => !member._id.equals(populatedMessage.sender._id)
+    );
+
     return res.json({
-      message,
+      message: {
+        id: populatedMessage._id,
+        text: populatedMessage.text,
+        senderEmail: populatedMessage.sender.email,
+        receiverEmail: receiver ? receiver.email : null,
+        timestamp: populatedMessage.createdAt,
+      },
       success: true,
       error: false,
     });
@@ -64,12 +80,37 @@ async function sendMessage(req, res) {
 async function getMessages(req, res) {
   try {
     const { chatId } = req.params;
-    const messages = await MessageModel.find({ chatId }).populate(
-      "sender",
-      "email"
-    );
+    const chat = await ChatModel.findById(chatId).populate("members", "email");
+    const messages = await Message.find({ chatId })
+      .populate("sender", "email") // make sure sender is populated with email
+      .sort({ timestamp: 1 }); // or createdAt
+
+    if (!chat) {
+      return res.status(404).json({
+        message: "Chat not found",
+        error: true,
+        success: false,
+      });
+    }
+
+    const members = chat.members;
+
+    const formattedMessages = messages.map((msg) => {
+      const receiver = members.find(
+        (member) => !member._id.equals(msg.sender._id)
+      );
+
+      return {
+        id: msg._id,
+        text: msg.text,
+        senderEmail: msg.sender.email,
+        receiverEmail: receiver ? receiver.email : null,
+        timestamp: msg.createdAt,
+      };
+    });
+
     return res.json({
-      messages,
+      messages: formattedMessages,
       error: false,
       success: true,
     });
