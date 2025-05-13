@@ -15,12 +15,14 @@ async function startChat(req, res) {
       members: { $all: [userId, otherUserId] },
       ...(roomId ? { roomId } : {}),
     });
+
     if (!chat) {
       chat = await ChatModel.create({
         members: [userId, otherUserId],
         roomId: roomId || null,
       });
     }
+
     return res.json({ chat, error: false, success: true });
   } catch (error) {
     return res.status(500).json({
@@ -53,6 +55,10 @@ async function sendMessage(req, res) {
     const populatedMessage = await message.populate("sender", "email");
     const chat = await ChatModel.findById(chatId).populate("members", "email");
 
+    const senderRole = chat.members[0]._id.equals(populatedMessage.sender._id)
+      ? "user"
+      : "owner";
+
     const receiver = chat.members.find(
       (member) => !member._id.equals(populatedMessage.sender._id)
     );
@@ -61,6 +67,7 @@ async function sendMessage(req, res) {
       message: {
         id: populatedMessage._id,
         text: populatedMessage.text,
+        sender: senderRole,
         senderEmail: populatedMessage.sender.email,
         receiverEmail: receiver ? receiver.email : null,
         timestamp: populatedMessage.createdAt,
@@ -81,9 +88,6 @@ async function getMessages(req, res) {
   try {
     const { chatId } = req.params;
     const chat = await ChatModel.findById(chatId).populate("members", "email");
-    const messages = await Message.find({ chatId })
-      .populate("sender", "email") // make sure sender is populated with email
-      .sort({ timestamp: 1 }); // or createdAt
 
     if (!chat) {
       return res.status(404).json({
@@ -93,16 +97,23 @@ async function getMessages(req, res) {
       });
     }
 
-    const members = chat.members;
+    const messages = await MessageModel.find({ chatId })
+      .populate("sender", "email")
+      .sort({ createdAt: 1 });
 
     const formattedMessages = messages.map((msg) => {
-      const receiver = members.find(
+      const senderRole = chat.members[0]._id.equals(msg.sender._id)
+        ? "user"
+        : "owner";
+
+      const receiver = chat.members.find(
         (member) => !member._id.equals(msg.sender._id)
       );
 
       return {
         id: msg._id,
         text: msg.text,
+        sender: senderRole,
         senderEmail: msg.sender.email,
         receiverEmail: receiver ? receiver.email : null,
         timestamp: msg.createdAt,
@@ -129,6 +140,7 @@ async function getChats(req, res) {
     const chats = await ChatModel.find({ members: userId })
       .populate("members", "email")
       .populate("latestMessage");
+
     return res.json({
       chats,
       error: false,
