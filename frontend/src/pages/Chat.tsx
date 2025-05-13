@@ -20,21 +20,21 @@ export function Chat() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const rawEmail = localStorage.getItem("email") ?? "unknown@user.com";
-  const senderEmail = rawEmail.replace(/^"|"$/g, ""); // Strip quotes if any
+  const senderEmail = rawEmail.replace(/^"|"$/g, ""); // Strip quotes if needed
 
+  // Initialize chat
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        // Step 1: Get room data to identify receiver
+        // Step 1: Fetch room data to get owner's email
         const resRoom = await fetch(`http://localhost:5000/api/room/${roomId}`);
         const roomData = await resRoom.json();
 
         if (!roomData.success) throw new Error("Room fetch failed");
-
         const receiver = roomData.data.email;
         setReceiverEmail(receiver);
 
-        // Step 2: Fetch sender and receiver user data by email
+        // Step 2: Fetch sender and receiver user data
         const senderRes = await fetch(
           `http://localhost:5000/api/user/by-email?email=${senderEmail}`
         );
@@ -49,7 +49,7 @@ export function Chat() {
           throw new Error("One or both users not found");
         }
 
-        // Step 3: Start the chat session
+        // Step 3: Create/start chat
         const chatRes = await fetch("http://localhost:5000/api/chat/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -69,7 +69,6 @@ export function Chat() {
         );
         const msgData = await msgRes.json();
 
-        // Ensure messages is an array, even if the response is empty or malformed
         setMessages(msgData?.messages || []);
       } catch (err) {
         console.error("Chat initialization failed:", err);
@@ -79,6 +78,12 @@ export function Chat() {
     initializeChat();
   }, [roomId, senderEmail]);
 
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Send message
   const sendMessage = async () => {
     if (!input.trim() || !chatId) return;
 
@@ -88,9 +93,7 @@ export function Chat() {
       );
       const senderUser = await senderRes.json();
 
-      if (!senderUser?.data?._id) {
-        throw new Error("Sender not found");
-      }
+      if (!senderUser?.data?._id) throw new Error("Sender not found");
 
       const newMsg = {
         chatId,
@@ -119,25 +122,13 @@ export function Chat() {
     }
   };
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   return (
     <div className="w-full min-h-screen flex justify-center items-center bg-gradient-to-br from-blue-100 to-gray-200">
       <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-blue-700 text-white px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <h2 className="text-xl font-semibold">Chat with Room Owner</h2>
-          <div className="text-sm">
-            <p>
-              <span className="font-medium">You:</span> {senderEmail}
-            </p>
-            <p>
-              <span className="font-medium">Owner:</span>{" "}
-              {receiverEmail ? receiverEmail : "loading..."}
-            </p>
-          </div>
+          <h2 className="text-xl font-semibold">Chat Room</h2>
+          <p className="text-sm opacity-80">{receiverEmail}</p>
         </div>
 
         {/* Messages */}
@@ -154,7 +145,7 @@ export function Chat() {
                   className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md text-sm relative ${
                     msg.sender === "user"
                       ? "bg-blue-600 text-white rounded-br-none"
-                      : "bg-white text-gray-800 border rounded-bl-none"
+                      : "bg-gray-200 text-gray-800 rounded-bl-none"
                   }`}
                 >
                   <div className="text-[11px] mb-1 opacity-80">
@@ -171,7 +162,9 @@ export function Chat() {
               </div>
             ))
           ) : (
-            <div>No messages available.</div>
+            <div className="text-center text-sm text-gray-500">
+              No messages available.
+            </div>
           )}
           <div ref={messagesEndRef} />
         </div>
