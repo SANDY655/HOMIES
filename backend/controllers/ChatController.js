@@ -1,6 +1,8 @@
 const { ChatModel } = require("../models/ChatModel");
 const { MessageModel } = require("../models/MessageModel");
+const { UserModel } = require("../models/UserModel"); // Make sure this is correctly imported
 
+// Start or fetch chat
 async function startChat(req, res) {
   const { userId, otherUserId, roomId } = req.body;
   if (!userId || !otherUserId) {
@@ -33,6 +35,7 @@ async function startChat(req, res) {
   }
 }
 
+// Send a message
 async function sendMessage(req, res) {
   const { chatId, senderId, text } = req.body;
   if (!chatId || !senderId || !text) {
@@ -66,6 +69,7 @@ async function sendMessage(req, res) {
     return res.json({
       message: {
         id: populatedMessage._id,
+        chatId: populatedMessage.chatId, // ✅ Essential for socket room emit
         text: populatedMessage.text,
         sender: senderRole,
         senderEmail: populatedMessage.sender.email,
@@ -84,6 +88,7 @@ async function sendMessage(req, res) {
   }
 }
 
+// Get all messages for a chat
 async function getMessages(req, res) {
   try {
     const { chatId } = req.params;
@@ -112,6 +117,7 @@ async function getMessages(req, res) {
 
       return {
         id: msg._id,
+        chatId: msg.chatId,
         text: msg.text,
         sender: senderRole,
         senderEmail: msg.sender.email,
@@ -134,12 +140,33 @@ async function getMessages(req, res) {
   }
 }
 
+// Get all chats for a user (by userId or email)
 async function getChats(req, res) {
   try {
-    const { userId } = req.params;
+    const identifier = req.params.userId;
+
+    const user =
+      identifier.length === 24
+        ? { _id: identifier }
+        : await UserModel.findOne({ email: identifier });
+
+    if (!user || (user && user._id === undefined)) {
+      return res.status(404).json({
+        message: "User not found",
+        error: true,
+        success: false,
+      });
+    }
+
+    const userId = user._id || user;
+
     const chats = await ChatModel.find({ members: userId })
       .populate("members", "email")
-      .populate("latestMessage");
+      .populate({
+        path: "latestMessage",
+        populate: { path: "sender", select: "email" },
+      })
+      .sort({ updatedAt: -1 });
 
     return res.json({
       chats,
@@ -155,4 +182,9 @@ async function getChats(req, res) {
   }
 }
 
-module.exports = { startChat, sendMessage, getMessages, getChats };
+module.exports = {
+  startChat,
+  sendMessage,
+  getMessages,
+  getChats,
+};

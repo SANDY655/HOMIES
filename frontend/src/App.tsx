@@ -1,6 +1,7 @@
 import { LoginForm } from "./components/login-form";
 import { RegisterForm } from "./components/register-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { io } from "socket.io-client";
 
 function App() {
   return (
