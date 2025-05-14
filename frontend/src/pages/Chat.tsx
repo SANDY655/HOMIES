@@ -152,33 +152,36 @@ export function Chat() {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
           {messages.length > 0 ? (
-            messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${
-                  msg.sender === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
+            messages.map((msg, idx) => {
+              const isSender = msg.senderEmail === senderEmail;
+              return (
                 <div
-                  className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md text-sm relative ${
-                    msg.sender === "user"
-                      ? "bg-blue-600 text-white rounded-br-none"
-                      : "bg-gray-200 text-gray-800 rounded-bl-none"
+                  key={idx}
+                  className={`flex ${
+                    isSender ? "justify-end" : "justify-start"
                   }`}
                 >
-                  <div className="text-[11px] mb-1 opacity-80">
-                    {msg.senderEmail}
-                  </div>
-                  {msg.text}
-                  <div className="text-[10px] text-right mt-1 opacity-60">
-                    {new Date(msg.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                  <div
+                    className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md text-sm relative ${
+                      isSender
+                        ? "bg-blue-600 text-white rounded-br-none"
+                        : "bg-gray-200 text-gray-800 rounded-bl-none"
+                    }`}
+                  >
+                    <div className="text-[11px] mb-1 opacity-80">
+                      {isSender ? "You" : msg.senderEmail}
+                    </div>
+                    {msg.text}
+                    <div className="text-[10px] text-right mt-1 opacity-60">
+                      {new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="text-center text-sm text-gray-500">
               No messages yet.
