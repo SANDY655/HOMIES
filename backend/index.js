@@ -12,6 +12,7 @@ const { MessageRouter } = require("./routes/MessageRouter");
 const app = express();
 const server = http.createServer(app);
 
+// Initialize Socket.IO with CORS for frontend
 const io = socketIO(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -20,43 +21,49 @@ const io = socketIO(server, {
   },
 });
 
+// Middleware
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
 
+// API Routes
 app.use("/api/user", userRouter);
 app.use("/api/room", roomRouter);
 app.use("/api/chat", ChatRouter);
 app.use("/api/message", MessageRouter);
 
+// Socket.IO logic
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("🟢 User connected:", socket.id);
 
-  // Handle joining chat
+  // Handle user joining a chat room
   socket.on("join_chat", (chatId) => {
-    console.log(`Socket ${socket.id} attempting to join chat: ${chatId}`);
-    socket.join(chatId, () => {
-      console.log(`Socket ${socket.id} joined chat: ${chatId}`);
-    });
+    socket.join(chatId);
+    console.log(`➡️ Socket ${socket.id} joined chat: ${chatId}`);
   });
 
-  // Handle sending a message
+  // Handle sending messages
   socket.on("send_message", (message) => {
-    console.log("✅ Message received via socket:", message);
     if (!message.chatId) {
-      console.warn("❌ message.chatId is undefined!");
-    } else {
-      console.log("🔁 Broadcasting message to room:", message.chatId);
-      io.to(message.chatId).emit("receive_message", message);
+      console.warn("❌ Message missing chatId:", message);
+      return;
     }
+
+    console.log("📨 Message received:", message);
+
+    // Emit the message to the specific chat room
+    socket.to(message.chatId).emit("receive_message", message);
   });
 
+  // Handle disconnection
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    console.log("🔴 User disconnected:", socket.id);
   });
 });
 
+// Start server after DB connection
 connectDB().then(() => {
-  server.listen(5000, () => {
-    console.log("🚀 Server running on port 5000");
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
 });
