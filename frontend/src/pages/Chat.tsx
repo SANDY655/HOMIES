@@ -1,6 +1,6 @@
 import { createRoute, RootRoute, useParams } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import socket from "../socket";
 
 interface Message {
   _id?: string;
@@ -11,8 +11,6 @@ interface Message {
   receiverEmail: string;
   timestamp: string;
 }
-
-const socket: Socket = io("http://localhost:5000");
 
 export function Chat() {
   const { roomId } = useParams({ strict: false }) as { roomId: string };
@@ -27,11 +25,14 @@ export function Chat() {
   ).replace(/^"|"$/g, "");
 
   useEffect(() => {
+    socket.connect(); // Connect on mount
+
     const initializeChat = async () => {
       try {
         const resRoom = await fetch(`http://localhost:5000/api/room/${roomId}`);
         const roomData = await resRoom.json();
         if (!roomData.success) throw new Error("Room fetch failed");
+
         const receiver = roomData.data.email;
         setReceiverEmail(receiver);
 
@@ -60,15 +61,16 @@ export function Chat() {
         });
 
         const chatData = await chatRes.json();
-        setChatId(chatData.chat._id);
+        const chatId = chatData.chat._id;
+        setChatId(chatId);
 
         const msgRes = await fetch(
-          `http://localhost:5000/api/chat/messages/${chatData.chat._id}`
+          `http://localhost:5000/api/chat/messages/${chatId}`
         );
         const msgData = await msgRes.json();
         setMessages(msgData?.messages || []);
 
-        socket.emit("join_chat", chatData.chat._id);
+        socket.emit("join_chat", chatId); // Join socket room
       } catch (err) {
         console.error("Chat initialization failed:", err);
       }
@@ -77,6 +79,7 @@ export function Chat() {
     initializeChat();
 
     return () => {
+      socket.off("receive_message");
       socket.disconnect();
     };
   }, [roomId, senderEmail]);
@@ -86,6 +89,7 @@ export function Chat() {
       setMessages((prev) => [...prev, msg]);
     };
     socket.on("receive_message", handleReceive);
+
     return () => {
       socket.off("receive_message", handleReceive);
     };
@@ -119,7 +123,7 @@ export function Chat() {
       const data = await res.json();
       const newMessage = {
         ...data.message,
-        chatId, // ✅ Add chatId to ensure socket works
+        chatId,
       };
 
       setInput("");
