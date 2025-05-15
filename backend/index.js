@@ -51,7 +51,7 @@ io.on("connection", (socket) => {
     console.log("📨 Message received:", message);
 
     // Emit the message to the specific chat room
-    socket.to(message.chatId).emit("receive_message", message);
+    io.to(message.chatId).emit("receive_message", message);
   });
 
   // Handle disconnection
