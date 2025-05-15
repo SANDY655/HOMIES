@@ -1,8 +1,10 @@
 const { RoomModel } = require("../models/RoomModel");
 const { UserModel } = require("../models/UserModel");
+const mongoose = require("mongoose");
 async function postroom(req, res) {
   try {
     const {
+      userId,
       email,
       title,
       description,
@@ -15,6 +17,7 @@ async function postroom(req, res) {
       images,
     } = req.body;
     if (
+      !userId ||
       !email ||
       !title ||
       !description ||
@@ -42,6 +45,7 @@ async function postroom(req, res) {
     }
 
     const newRoom = new RoomModel({
+      userId,
       email,
       title,
       description,
@@ -167,4 +171,21 @@ async function getroom(req, res) {
     });
   }
 }
-module.exports = { postroom, searchroom, getroom };
+async function getRoomsByUser(req, res) {
+  try {
+    const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid user ID", success: false, error: true });
+    }
+    const rooms = await RoomModel.find({ userId }); // Query by userId field
+    return res.status(200).json({ rooms, success: true, error: false });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: error.message, success: false, error: true });
+  }
+}
+
+module.exports = { postroom, searchroom, getroom, getRoomsByUser };

@@ -1,7 +1,11 @@
 const mongoose = require("mongoose");
-
 const roomSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    }, // Add this
     email: { type: String, required: true },
     title: { type: String, required: true },
     description: { type: String, required: true },
@@ -14,7 +18,7 @@ const roomSchema = new mongoose.Schema(
       enum: ["single", "shared", "apartment"],
       required: true,
     },
-    images: [{ type: String }], // Array of image URLs or paths
+    images: [{ type: String }],
     amenities: {
       wifi: { type: Boolean, default: false },
       ac: { type: Boolean, default: false },

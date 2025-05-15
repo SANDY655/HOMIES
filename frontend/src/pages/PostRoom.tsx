@@ -131,8 +131,8 @@ export function PostRoom() {
     setLoading(true);
 
     const userEmail = localStorage.getItem("email")?.replace(/^"|"$/g, "");
-
-    const formData = { ...form, email: userEmail };
+    const userId = localStorage.getItem("userId");
+    const formData = { ...form, email: userEmail, userId: userId };
 
     try {
       const response = await fetch("http://localhost:5000/api/room/postroom", {
