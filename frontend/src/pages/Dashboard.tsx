@@ -16,10 +16,12 @@ import type { RootRoute } from "@tanstack/react-router";
 
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
+  const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const userId = localStorage.getItem("userId");
+  const [activeTab, setActiveTab] = useState<"mine" | "others">("mine");
 
+  // Get all chats
   const { data: chats, isLoading: loadingChats } = useQuery({
     queryKey: ["chats", userId],
     queryFn: async () => {
@@ -31,6 +33,36 @@ export function Dashboard() {
     },
     enabled: !!userId,
   });
+
+  // Get rooms posted by this user
+  const { data: myRooms } = useQuery({
+    queryKey: ["myRooms", userId],
+    queryFn: async () => {
+      const res = await fetch(`http://localhost:5000/api/room/user/${userId}`);
+      const data = await res.json();
+      if (!data.success)
+        throw new Error(data.message || "Failed to fetch rooms");
+      return data.rooms;
+    },
+    enabled: !!userId,
+  });
+
+  // Debug logs for data
+  console.log("User ID:", userId);
+  console.log("Chats fetched:", chats);
+  console.log("My Rooms fetched:", myRooms);
+
+  const myRoomIds = myRooms?.map((room) => room._id.toString()) || [];
+  console.log("MyRoom IDs:", myRoomIds);
+
+  // Filter chats by tab selection with debug logs
+  const filteredChats =
+    chats?.filter((chat) => {
+      const roomId = chat.roomId?.toString() || "";
+      const isMine = myRoomIds.includes(roomId);
+      console.log(`Chat ${chat._id} roomId ${roomId} isMine? ${isMine}`);
+      return activeTab === "mine" ? isMine : !isMine;
+    }) || [];
 
   useEffect(() => {
     if (!userId) return;
@@ -45,10 +77,11 @@ export function Dashboard() {
     return () => {
       socket.off("receive_message", onNewMessage);
     };
-  }, [userId, queryClient, chats]);
+  }, [userId, chats, queryClient]);
 
-  const handleLogout = async () => {
-    // Your logout logic here
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate({ to: "/" });
   };
 
   const handleRoomPosting = () => navigate({ to: "/post-room" });
@@ -85,26 +118,44 @@ export function Dashboard() {
 
       {/* Main layout */}
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-12 gap-8">
-        {/* Chat List (Left) */}
+        {/* Chat Section */}
         <section className="col-span-12 md:col-span-7 bg-white rounded-2xl shadow overflow-hidden flex flex-col h-[calc(100vh-96px)]">
-          <header className="flex items-center gap-3 p-6 border-b border-gray-200">
-            <MessageSquare size={24} className="text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-800">Your Chats</h2>
+          <header className="p-4 border-b border-gray-200 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <MessageSquare size={24} className="text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-800">
+                Your Chats
+              </h2>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={activeTab === "mine" ? "default" : "outline"}
+                onClick={() => setActiveTab("mine")}
+              >
+                My Room Chats
+              </Button>
+              <Button
+                variant={activeTab === "others" ? "default" : "outline"}
+                onClick={() => setActiveTab("others")}
+              >
+                Other Room Chats
+              </Button>
+            </div>
           </header>
 
           <main className="flex-1 overflow-y-auto p-4">
             {loadingChats ? (
               <p className="text-gray-500">Loading chats...</p>
-            ) : !chats || chats.length === 0 ? (
+            ) : !filteredChats || filteredChats.length === 0 ? (
               <p className="text-gray-500">No chats found.</p>
             ) : (
               <ul className="divide-y divide-gray-200">
-                {chats.map((chat) => {
+                {filteredChats.map((chat) => {
                   const otherUser = chat.members.find((m) => m._id !== userId);
                   return (
                     <li
                       key={chat._id}
-                      onClick={() => navigate({ to: `/chat/${chat.roomId}` })}
+                      onClick={() => navigate({ to: `/chat/${chat._id}` })}
                       className="flex items-center gap-4 p-4 rounded-lg cursor-pointer hover:bg-blue-50 transition"
                     >
                       <Avatar
@@ -128,7 +179,7 @@ export function Dashboard() {
           </main>
         </section>
 
-        {/* Right cards/buttons */}
+        {/* Room Actions */}
         <section className="col-span-12 md:col-span-5 flex flex-col gap-6">
           <Card className="rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition cursor-pointer p-6">
             <CardHeader>

@@ -68,6 +68,7 @@ async function sendMessage(req, res) {
       message: {
         id: populatedMessage._id,
         chatId: populatedMessage.chatId,
+        roomId: chat.roomId || null,
         text: populatedMessage.text,
         sender: senderRole,
         senderEmail: populatedMessage.sender.email,
@@ -112,6 +113,7 @@ async function getMessages(req, res) {
       return {
         id: msg._id,
         chatId: msg.chatId,
+        roomId: chat.roomId || null,
         text: msg.text,
         sender: senderRole,
         senderEmail: msg.sender.email,
@@ -162,7 +164,16 @@ async function getChats(req, res) {
       })
       .sort({ updatedAt: -1 });
 
-    return res.json({ chats, error: false, success: true });
+    // Add roomId to each chat in response
+    const formattedChats = chats.map((chat) => ({
+      _id: chat._id,
+      members: chat.members,
+      roomId: chat.roomId || null,
+      latestMessage: chat.latestMessage,
+      updatedAt: chat.updatedAt,
+    }));
+
+    return res.json({ chats: formattedChats, error: false, success: true });
   } catch (error) {
     return res.status(500).json({
       message: error.message,
