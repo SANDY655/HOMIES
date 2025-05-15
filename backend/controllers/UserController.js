@@ -55,14 +55,16 @@ async function login(req, res) {
         success: false,
       });
     }
+
     const user = await UserModel.findOne({ email }).select("+password");
     if (!user) {
       return res.status(400).json({
-        message: "User does not exists",
+        message: "User does not exist",
         error: true,
         success: false,
       });
     }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(400).json({
@@ -71,6 +73,7 @@ async function login(req, res) {
         success: false,
       });
     }
+
     if (user.isLoggedIn) {
       return res.status(400).json({
         message: "Already Logged in",
@@ -78,16 +81,27 @@ async function login(req, res) {
         success: false,
       });
     }
+
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
     user.isLoggedIn = true;
     await user.save();
+
+    // ✅ Strip sensitive info like password before sending user data
+    const userData = {
+      _id: user._id,
+      email: user.email,
+      name: user.name, // add more fields if needed
+    };
+
     return res.json({
       message: "Login Successful",
       token,
+      user: userData, // ✅ send user info here
       error: false,
       success: true,
     });
@@ -99,6 +113,7 @@ async function login(req, res) {
     });
   }
 }
+
 async function logout(req, res) {
   try {
     const authHeader = req.headers.authorization;

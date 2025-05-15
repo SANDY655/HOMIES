@@ -10,11 +10,13 @@ import axios from "axios";
 import { useState } from "react";
 import { createRoute, RootRoute } from "@tanstack/react-router";
 import { useRouter } from "@tanstack/react-router";
+
 // Zod schema
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
+
 type LoginSchema = z.infer<typeof loginSchema>;
 
 export function LoginForm({
@@ -47,11 +49,12 @@ export function LoginForm({
         { withCredentials: true }
       );
 
-      // Expecting response to have { token, user }
-      const { token } = response.data;
+      // Expecting backend to return { token, user }
+      const { token, user } = response.data;
 
       localStorage.setItem("token", token);
-      localStorage.setItem("email", JSON.stringify(data.email));
+      localStorage.setItem("userId", user._id); // ✅ Fix: store from response
+      localStorage.setItem("email", JSON.stringify(user.email)); // ✅ Optional: or store full user object
 
       setMessage("Login Successful");
       const redirectTo = router.state.location.search.redirect ?? "/dashboard";

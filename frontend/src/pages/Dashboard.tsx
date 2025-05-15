@@ -15,6 +15,14 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
+import {
+  Mail,
+  Settings,
+  LogOut,
+  MessageSquare,
+  Home,
+  Users,
+} from "lucide-react";
 
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
@@ -27,12 +35,10 @@ export function Dashboard() {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        console.log("Fetching chats for user:", userId);
-        const res = await fetch(`http://localhost:5000/api/chat/${userId}`);
-        console.log("Response status:", res.status);
-
+        const res = await fetch(
+          `http://localhost:5000/api/chat/user/${userId}`
+        );
         const data = await res.json();
-        console.log("Fetched data:", data);
 
         if (data.success) {
           setChats(data.chats);
@@ -63,15 +69,12 @@ export function Dashboard() {
 
       const result = await response.json();
       if (response.ok) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("email");
-        localStorage.removeItem("userId");
+        localStorage.clear();
         navigate({ to: "/" });
       } else {
         alert(result.message || "Logout failed");
       }
     } catch (error) {
-      console.error("Logout error:", error);
       alert("Something went wrong!");
     }
   };
@@ -81,77 +84,75 @@ export function Dashboard() {
   const handleSearchRooms = () => navigate({ to: "/search-rooms" });
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 md:px-10">
+    <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
       <div className="max-w-6xl mx-auto space-y-10">
+        {/* Header */}
         <div className="text-center space-y-2">
           <Heading as="h1" size="2xl" className="font-bold text-gray-900">
             Welcome to Your Dashboard
           </Heading>
           <p className="text-gray-500 text-base">
-            Hello, {email || "User"}! Here's your account overview.
+            Hello, {email || "User"}! Here’s your account overview.
           </p>
         </div>
 
+        {/* Profile & Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Profile Card */}
-          <Card className="rounded-lg bg-white shadow-md">
+          <Card className="rounded-2xl bg-white shadow">
             <CardHeader className="flex flex-col items-center py-6">
               <Avatar
                 src={email?.avatar || "/img2.png"}
                 alt="User Avatar"
-                className="w-24 h-24 mb-4 border-2 border-gray-300"
+                className="w-24 h-24 mb-4 border-4 border-gray-200"
               />
-              <CardTitle className="text-lg text-gray-800">
-                {email || "User"}
-              </CardTitle>
-              <CardDescription className="text-sm text-gray-600">
+              <CardTitle className="text-xl text-gray-800">{email}</CardTitle>
+              <CardDescription className="text-gray-500 text-sm">
                 {email}
               </CardDescription>
             </CardHeader>
           </Card>
 
-          {/* Quick Actions */}
-          <Card className="rounded-lg bg-white shadow-md">
+          <Card className="rounded-2xl bg-white shadow">
             <CardHeader>
-              <CardTitle className="text-xl text-gray-800">
-                Quick Actions
+              <CardTitle className="text-lg flex items-center gap-2 text-gray-800">
+                <Settings size={18} /> Quick Actions
               </CardTitle>
               <CardDescription className="text-sm text-gray-500">
-                Manage your account quickly.
+                Manage your account settings and more.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Button size="lg" className="w-full">
-                View Profile
+            <CardContent className="space-y-3">
+              <Button size="lg" className="w-full flex gap-2 items-center">
+                <Mail size={18} /> View Profile
               </Button>
               <Button
                 variant="secondary"
                 size="lg"
-                className="w-full text-gray-800 hover:bg-gray-200"
+                className="w-full flex gap-2 items-center"
               >
-                Settings
+                <Settings size={18} /> Settings
               </Button>
               <Button
                 variant="destructive"
                 size="lg"
-                className="w-full bg-red-600 text-white hover:bg-red-700"
+                className="w-full flex gap-2 items-center"
                 onClick={handleLogout}
               >
-                Logout
+                <LogOut size={18} /> Logout
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Room Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="rounded-lg bg-white shadow-md">
+        {/* Room Management */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="rounded-2xl bg-white shadow-md hover:shadow-lg transition">
             <CardHeader>
-              <CardTitle className="text-xl text-gray-800">
-                Post a Room
+              <CardTitle className="flex items-center gap-2 text-gray-800">
+                <Home size={18} /> Post a Room
               </CardTitle>
               <CardDescription className="text-sm text-gray-500">
-                Post a room available for rent.
+                Let others know about available rooms.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -165,19 +166,19 @@ export function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-lg bg-white shadow-md">
+          <Card className="rounded-2xl bg-white shadow-md hover:shadow-lg transition">
             <CardHeader>
-              <CardTitle className="text-xl text-gray-800">
-                Search Rooms
+              <CardTitle className="flex items-center gap-2 text-gray-800">
+                <Home size={18} /> Search Rooms
               </CardTitle>
               <CardDescription className="text-sm text-gray-500">
-                Search available rooms for rent.
+                Explore rooms available for rent.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button
                 size="lg"
-                className="w-full bg-yellow-600 text-white hover:bg-yellow-700"
+                className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
                 onClick={handleSearchRooms}
               >
                 Search Rooms
@@ -185,13 +186,13 @@ export function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-lg bg-white shadow-md">
+          <Card className="rounded-2xl bg-white shadow-md hover:shadow-lg transition">
             <CardHeader>
-              <CardTitle className="text-xl text-gray-800">
-                Find Roommates
+              <CardTitle className="flex items-center gap-2 text-gray-800">
+                <Users size={18} /> Find Roommates
               </CardTitle>
               <CardDescription className="text-sm text-gray-500">
-                Search for potential roommates.
+                Connect with potential roommates.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -206,30 +207,14 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Overview Section */}
-        <Card className="rounded-lg bg-white shadow-md">
+        {/* Chat Section */}
+        <Card className="rounded-2xl bg-white shadow">
           <CardHeader>
-            <CardTitle className="text-xl text-gray-800">
-              Dashboard Overview
+            <CardTitle className="flex items-center gap-2 text-gray-800">
+              <MessageSquare size={18} /> Your Chats
             </CardTitle>
             <CardDescription className="text-sm text-gray-500">
-              Track your progress, view recent activity, and more.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mt-2">
-              This section can include metrics, recent activity, or other useful
-              insights.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Chat List Section */}
-        <Card className="rounded-lg bg-white shadow-md">
-          <CardHeader>
-            <CardTitle className="text-xl text-gray-800">Your Chats</CardTitle>
-            <CardDescription className="text-sm text-gray-500">
-              View conversations with owners or users.
+              Conversations with users and landlords.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -242,12 +227,19 @@ export function Dashboard() {
                 {chats.map((chat) => {
                   const otherUser = chat.members.find((m) => m._id !== userId);
                   return (
-                    <li key={chat._id} className="py-3">
-                      <div className="text-gray-800 font-medium">
-                        {otherUser?.email || "Unknown"}
-                      </div>
-                      <div className="text-gray-500 text-sm">
-                        {chat.latestMessage?.text || "No messages yet"}
+                    <li
+                      key={chat._id}
+                      className="py-3 flex items-start gap-3 cursor-pointer hover:bg-gray-100 rounded-md transition"
+                      onClick={() => navigate({ to: `/chat/${chat.roomId}` })}
+                    >
+                      <Avatar src="/user.png" className="w-10 h-10" />
+                      <div>
+                        <div className="font-medium text-gray-800">
+                          {otherUser?.email || "Unknown User"}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {chat.latestMessage?.text || "No messages yet"}
+                        </div>
                       </div>
                     </li>
                   );
