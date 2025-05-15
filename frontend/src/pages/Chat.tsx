@@ -106,20 +106,19 @@ export function Chat() {
   });
 
   useEffect(() => {
-    socket.connect();
-    if (chat?._id) {
-      socket.emit("join_chat", chat._id);
-    }
+    if (!chat?._id) return;
+
+    if (!socket.connected) socket.connect();
+    socket.emit("join_chat", chat._id);
 
     return () => {
       socket.off("receive_message");
-      socket.disconnect();
     };
   }, [chat?._id]);
 
   useEffect(() => {
     const handler = (msg: Message) => {
-      refetch(); // Or use setMessages if managing locally
+      refetch(); // update message list on new message
     };
     socket.on("receive_message", handler);
     return () => socket.off("receive_message", handler);
@@ -132,6 +131,21 @@ export function Chat() {
   const sendMessage = async () => {
     if (!input.trim() || !chat?._id) return;
 
+    const messageText = input.trim();
+    setInput("");
+
+    const optimisticMessage: Message = {
+      chatId: chat._id,
+      text: messageText,
+      sender: "user",
+      senderEmail,
+      receiverEmail,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Optional: Add to message list immediately (requires local state)
+    // setMessages((prev) => [...prev, optimisticMessage]);
+
     try {
       const res = await fetch("http://localhost:5000/api/chat/send", {
         method: "POST",
@@ -139,18 +153,16 @@ export function Chat() {
         body: JSON.stringify({
           chatId: chat._id,
           senderId: senderUser._id,
-          text: input.trim(),
+          text: messageText,
         }),
       });
 
       const data = await res.json();
-      setInput("");
-      socket.emit("send_message", data.message);
+      socket.emit("send_message", data.message); // Send real-time message
     } catch (err) {
       console.error("Send error", err);
     }
   };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
