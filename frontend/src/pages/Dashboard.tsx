@@ -15,6 +15,8 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import socket from "../socket";
 import {
   Mail,
   Settings,
@@ -26,34 +28,44 @@ import {
 
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
-  const userId = localStorage.getItem("userId");
+  // const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
-
-  const [chats, setChats] = useState([]);
-  const [loadingChats, setLoadingChats] = useState(true);
+  const queryClient = useQueryClient();
+  const userId = localStorage.getItem("userId");
+  const {
+    data: chats,
+    isLoading: loadingChats,
+    error,
+  } = useQuery({
+    queryKey: ["chats", userId],
+    queryFn: async () => {
+      const res = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
+      const data = await res.json();
+      if (!data.success)
+        throw new Error(data.message || "Failed to fetch Chat");
+      return data.chats;
+    },
+    enabled: !!userId,
+  });
 
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const res = await fetch(
-          `http://localhost:5000/api/chat/user/${userId}`
-        );
-        const data = await res.json();
+    if (!userId) return;
+    if (!socket.connected) socket.connect();
 
-        if (data.success) {
-          setChats(data.chats);
-        } else {
-          console.error("Error from server:", data.message);
-        }
-      } catch (err) {
-        console.error("Fetch failed:", err);
-      } finally {
-        setLoadingChats(false);
-      }
+    // Join all chat rooms the user is part of
+    chats?.forEach((chat) => socket.emit("join_chat", chat._id));
+
+    const onNewMessage = (newMessage) => {
+      console.log("New message received:", newMessage);
+      queryClient.invalidateQueries(["chats", userId]);
     };
 
-    if (userId) fetchChats();
-  }, [userId]);
+    socket.on("receive_message", onNewMessage);
+
+    return () => {
+      socket.off("receive_message", onNewMessage);
+    };
+  }, [userId, queryClient, chats]);
 
   const handleLogout = async () => {
     try {
@@ -220,7 +232,7 @@ export function Dashboard() {
           <CardContent>
             {loadingChats ? (
               <p className="text-gray-500">Loading chats...</p>
-            ) : chats.length === 0 ? (
+            ) : !chats || chats.length === 0 ? (
               <p className="text-gray-500">No chats found.</p>
             ) : (
               <ul className="divide-y divide-gray-200">
