@@ -1,5 +1,6 @@
 import { createRoute, RootRoute, useParams } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import socket from "../socket";
 
 interface Message {
@@ -12,126 +13,141 @@ interface Message {
   timestamp: string;
 }
 
+const fetchRoom = async (roomId: string) => {
+  const res = await fetch(`http://localhost:5000/api/room/${roomId}`);
+  const data = await res.json();
+  if (!data.success) throw new Error("Room fetch failed");
+  return data.data;
+};
+
+const fetchUserByEmail = async (email: string) => {
+  const res = await fetch(
+    `http://localhost:5000/api/user/by-email?email=${email}`
+  );
+  const data = await res.json();
+  if (!data.success) throw new Error("User fetch failed");
+  return data.data;
+};
+
+const startOrFetchChat = async ({
+  userId,
+  otherUserId,
+  roomId,
+}: {
+  userId: string;
+  otherUserId: string;
+  roomId: string;
+}) => {
+  const res = await fetch("http://localhost:5000/api/chat/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, otherUserId, roomId }),
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error("Chat start failed");
+  return data.chat;
+};
+
+const fetchMessages = async (chatId: string) => {
+  const res = await fetch(`http://localhost:5000/api/chat/messages/${chatId}`);
+  const data = await res.json();
+  if (!data.success) throw new Error("Message fetch failed");
+  return data.messages;
+};
+
 export function Chat() {
   const { roomId } = useParams({ strict: false }) as { roomId: string };
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [chatId, setChatId] = useState<string | null>(null);
-  const [receiverEmail, setReceiverEmail] = useState<string>("");
-
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const senderEmail = (
     localStorage.getItem("email") ?? "unknown@user.com"
   ).replace(/^"|"$/g, "");
 
+  const [input, setInput] = useState("");
+  const [receiverEmail, setReceiverEmail] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const { data: roomData } = useQuery({
+    queryKey: ["room", roomId],
+    queryFn: () => fetchRoom(roomId),
+  });
+
   useEffect(() => {
-    socket.connect(); // Connect on mount
+    if (roomData?.email) {
+      setReceiverEmail(roomData.email);
+    }
+  }, [roomData]);
 
-    const initializeChat = async () => {
-      try {
-        const resRoom = await fetch(`http://localhost:5000/api/room/${roomId}`);
-        const roomData = await resRoom.json();
-        if (!roomData.success) throw new Error("Room fetch failed");
+  const { data: senderUser } = useQuery({
+    queryKey: ["user", senderEmail],
+    queryFn: () => fetchUserByEmail(senderEmail),
+    enabled: !!roomData,
+  });
 
-        const receiver = roomData.data.email;
-        setReceiverEmail(receiver);
+  const { data: receiverUser } = useQuery({
+    queryKey: ["user", receiverEmail],
+    queryFn: () => fetchUserByEmail(receiverEmail),
+    enabled: !!receiverEmail,
+  });
 
-        const [senderRes, receiverRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/user/by-email?email=${senderEmail}`),
-          fetch(`http://localhost:5000/api/user/by-email?email=${receiver}`),
-        ]);
+  const { data: chat } = useQuery({
+    queryKey: ["chat", senderUser?._id, receiverUser?._id, roomId],
+    queryFn: () =>
+      startOrFetchChat({
+        userId: senderUser._id,
+        otherUserId: receiverUser._id,
+        roomId,
+      }),
+    enabled: !!senderUser && !!receiverUser,
+  });
 
-        const [senderUser, receiverUser] = await Promise.all([
-          senderRes.json(),
-          receiverRes.json(),
-        ]);
+  const { data: messages = [], refetch } = useQuery({
+    queryKey: ["messages", chat?._id],
+    queryFn: () => fetchMessages(chat._id),
+    enabled: !!chat?._id,
+  });
 
-        if (!senderUser?.data?._id || !receiverUser?.data?._id) {
-          throw new Error("User data missing");
-        }
-
-        const chatRes = await fetch("http://localhost:5000/api/chat/start", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: senderUser.data._id,
-            otherUserId: receiverUser.data._id,
-            roomId,
-          }),
-        });
-
-        const chatData = await chatRes.json();
-        const chatId = chatData.chat._id;
-        setChatId(chatId);
-
-        const msgRes = await fetch(
-          `http://localhost:5000/api/chat/messages/${chatId}`
-        );
-        const msgData = await msgRes.json();
-        setMessages(msgData?.messages || []);
-
-        socket.emit("join_chat", chatId); // Join socket room
-      } catch (err) {
-        console.error("Chat initialization failed:", err);
-      }
-    };
-
-    initializeChat();
+  useEffect(() => {
+    socket.connect();
+    if (chat?._id) {
+      socket.emit("join_chat", chat._id);
+    }
 
     return () => {
       socket.off("receive_message");
       socket.disconnect();
     };
-  }, [roomId, senderEmail]);
+  }, [chat?._id]);
 
   useEffect(() => {
-    const handleReceive = (msg: Message) => {
-      setMessages((prev) => [...prev, msg]);
+    const handler = (msg: Message) => {
+      refetch(); // Or use setMessages if managing locally
     };
-    socket.on("receive_message", handleReceive);
-
-    return () => {
-      socket.off("receive_message", handleReceive);
-    };
-  }, []);
+    socket.on("receive_message", handler);
+    return () => socket.off("receive_message", handler);
+  }, [refetch]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || !chatId) return;
+    if (!input.trim() || !chat?._id) return;
 
     try {
-      const senderRes = await fetch(
-        `http://localhost:5000/api/user/by-email?email=${senderEmail}`
-      );
-      const senderUser = await senderRes.json();
-
-      const newMsgPayload = {
-        chatId,
-        senderId: senderUser.data._id,
-        text: input.trim(),
-      };
-
       const res = await fetch("http://localhost:5000/api/chat/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newMsgPayload),
+        body: JSON.stringify({
+          chatId: chat._id,
+          senderId: senderUser._id,
+          text: input.trim(),
+        }),
       });
 
       const data = await res.json();
-      const newMessage = {
-        ...data.message,
-        chatId,
-      };
-
       setInput("");
-      setMessages((prev) => [...prev, newMessage]);
-
-      socket.emit("send_message", newMessage);
+      socket.emit("send_message", data.message);
     } catch (err) {
-      console.error("Failed to send message:", err);
+      console.error("Send error", err);
     }
   };
 
