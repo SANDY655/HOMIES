@@ -1,6 +1,6 @@
 const { ChatModel } = require("../models/ChatModel");
 const { MessageModel } = require("../models/MessageModel");
-const { UserModel } = require("../models/UserModel"); // Make sure this is correctly imported
+const { UserModel } = require("../models/UserModel");
 
 // Start or fetch chat
 async function startChat(req, res) {
@@ -28,7 +28,7 @@ async function startChat(req, res) {
     return res.json({ chat, error: false, success: true });
   } catch (error) {
     return res.status(500).json({
-      message: error.message || error,
+      message: error.message,
       error: true,
       success: false,
     });
@@ -52,7 +52,6 @@ async function sendMessage(req, res) {
       sender: senderId,
       text,
     });
-
     await ChatModel.findByIdAndUpdate(chatId, { latestMessage: message._id });
 
     const populatedMessage = await message.populate("sender", "email");
@@ -61,15 +60,14 @@ async function sendMessage(req, res) {
     const senderRole = chat.members[0]._id.equals(populatedMessage.sender._id)
       ? "user"
       : "owner";
-
     const receiver = chat.members.find(
-      (member) => !member._id.equals(populatedMessage.sender._id)
+      (m) => !m._id.equals(populatedMessage.sender._id)
     );
 
     return res.json({
       message: {
         id: populatedMessage._id,
-        chatId: populatedMessage.chatId, // ✅ Essential for socket room emit
+        chatId: populatedMessage.chatId,
         text: populatedMessage.text,
         sender: senderRole,
         senderEmail: populatedMessage.sender.email,
@@ -81,7 +79,7 @@ async function sendMessage(req, res) {
     });
   } catch (error) {
     return res.status(500).json({
-      message: error.message || error,
+      message: error.message,
       error: true,
       success: false,
     });
@@ -93,7 +91,6 @@ async function getMessages(req, res) {
   try {
     const { chatId } = req.params;
     const chat = await ChatModel.findById(chatId).populate("members", "email");
-
     if (!chat) {
       return res.status(404).json({
         message: "Chat not found",
@@ -110,10 +107,7 @@ async function getMessages(req, res) {
       const senderRole = chat.members[0]._id.equals(msg.sender._id)
         ? "user"
         : "owner";
-
-      const receiver = chat.members.find(
-        (member) => !member._id.equals(msg.sender._id)
-      );
+      const receiver = chat.members.find((m) => !m._id.equals(msg.sender._id));
 
       return {
         id: msg._id,
@@ -133,7 +127,7 @@ async function getMessages(req, res) {
     });
   } catch (error) {
     return res.status(500).json({
-      message: error.message || error,
+      message: error.message,
       error: true,
       success: false,
     });
@@ -145,12 +139,14 @@ async function getChats(req, res) {
   try {
     const identifier = req.params.userId;
 
-    const user =
-      identifier.length === 24
-        ? { _id: identifier }
-        : await UserModel.findOne({ email: identifier });
+    let user;
+    if (identifier.length === 24) {
+      user = await UserModel.findById(identifier);
+    } else {
+      user = await UserModel.findOne({ email: identifier });
+    }
 
-    if (!user || (user && user._id === undefined)) {
+    if (!user) {
       return res.status(404).json({
         message: "User not found",
         error: true,
@@ -158,9 +154,7 @@ async function getChats(req, res) {
       });
     }
 
-    const userId = user._id || user;
-
-    const chats = await ChatModel.find({ members: userId })
+    const chats = await ChatModel.find({ members: user._id })
       .populate("members", "email")
       .populate({
         path: "latestMessage",
@@ -168,14 +162,10 @@ async function getChats(req, res) {
       })
       .sort({ updatedAt: -1 });
 
-    return res.json({
-      chats,
-      error: false,
-      success: true,
-    });
+    return res.json({ chats, error: false, success: true });
   } catch (error) {
     return res.status(500).json({
-      message: error.message || error,
+      message: error.message,
       error: true,
       success: false,
     });
