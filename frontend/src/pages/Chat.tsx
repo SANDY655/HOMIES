@@ -118,7 +118,7 @@ export function Chat() {
 
   useEffect(() => {
     const handler = (msg: Message) => {
-      refetch(); // update message list on new message
+      refetch();
     };
     socket.on("receive_message", handler);
     return () => socket.off("receive_message", handler);
@@ -143,9 +143,6 @@ export function Chat() {
       timestamp: new Date().toISOString(),
     };
 
-    // Optional: Add to message list immediately (requires local state)
-    // setMessages((prev) => [...prev, optimisticMessage]);
-
     try {
       const res = await fetch("http://localhost:5000/api/chat/send", {
         method: "POST",
@@ -158,11 +155,12 @@ export function Chat() {
       });
 
       const data = await res.json();
-      socket.emit("send_message", data.message); // Send real-time message
+      socket.emit("send_message", data.message);
     } catch (err) {
       console.error("Send error", err);
     }
   };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -175,7 +173,6 @@ export function Chat() {
       <div className="w-full max-w-2xl h-[90vh] flex flex-col bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="sticky top-0 z-10 bg-blue-700 text-white px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <h2 className="text-xl font-semibold">Chat Room</h2>
-          <p className="text-sm opacity-80">{receiverEmail}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
@@ -190,7 +187,7 @@ export function Chat() {
                   }`}
                 >
                   <div
-                    className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md text-sm relative ${
+                    className={`break-words max-w-[75%] px-4 py-3 rounded-2xl shadow-md text-sm relative ${
                       isSender
                         ? "bg-blue-600 text-white rounded-br-none"
                         : "bg-gray-200 text-gray-800 rounded-bl-none"
@@ -244,4 +241,9 @@ export default (parentRoute: RootRoute) =>
     path: "/chat/$roomId",
     component: Chat,
     getParentRoute: () => parentRoute,
+    beforeLoad: ({ context, location }) => {
+      if (!context.auth.isAuthenticated()) {
+        throw redirect({ to: "/", search: { redirect: location.href } });
+      }
+    },
   });
