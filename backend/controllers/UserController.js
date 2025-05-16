@@ -91,7 +91,7 @@ async function login(req, res) {
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
       {
-        expiresIn: "1h",
+        expiresIn: "7d",
         // jwtid: some unique id (optional),
         // issuer: 'your-app-name' (optional),
       }
