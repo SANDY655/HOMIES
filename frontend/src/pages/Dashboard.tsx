@@ -223,7 +223,7 @@ export function Dashboard() {
                 variant={activeTab === "others" ? "default" : "outline"}
                 onClick={() => setActiveTab("others")}
               >
-                Other Room Chats
+                Chats on Other Rooms
               </Button>
             </div>
           </header>
