@@ -17,6 +17,7 @@ import type { RootRoute } from "@tanstack/react-router";
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
   const userId = localStorage.getItem("userId");
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"mine" | "others">("mine");
@@ -27,6 +28,7 @@ export function Dashboard() {
     queryFn: async () => {
       const res = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
       const data = await res.json();
+      console.log(data);
       if (!data.success)
         throw new Error(data.message || "Failed to fetch Chat");
       return data.chats;
@@ -39,6 +41,7 @@ export function Dashboard() {
     queryKey: ["myRooms", userId],
     queryFn: async () => {
       const res = await fetch(`http://localhost:5000/api/room/user/${userId}`);
+      console.log("bye" + userId);
       const data = await res.json();
       if (!data.success)
         throw new Error(data.message || "Failed to fetch rooms");
