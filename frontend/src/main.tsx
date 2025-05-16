@@ -28,6 +28,7 @@ import PostRoomRoute from "./pages/PostRoom.tsx";
 import FindingRoommatesRoute from "./pages/FindRoomates.tsx";
 import SearchRoomRoute from "./pages/SearchRoom.tsx";
 import RoomRoute from "./pages/Room.tsx";
+import MyRoomsRoute from "./pages/MyRooms.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ChatRoute from "./pages/Chat.tsx";
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ const routeTree = rootRoute.addChildren([
   PostRoomRoute(rootRoute),
   SearchRoomRoute(rootRoute),
   FindingRoommatesRoute(rootRoute),
+  MyRoomsRoute(rootRoute),
   DemoTable(rootRoute),
   DemoTanstackQuery(rootRoute),
   RoomRoute(rootRoute),

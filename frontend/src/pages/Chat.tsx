@@ -1,4 +1,9 @@
-import { createRoute, RootRoute, useParams } from "@tanstack/react-router";
+import {
+  createRoute,
+  redirect,
+  RootRoute,
+  useParams,
+} from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import socket from "../socket";
