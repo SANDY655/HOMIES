@@ -158,6 +158,12 @@ export function RegisterForm({
 export default (parentRoute: RootRoute) =>
   createRoute({
     path: "/register",
-    component: RegisterForm,
     getParentRoute: () => parentRoute,
+    component: RegisterForm,
+    beforeLoad: () => {
+      const isLoggedIn = !!localStorage.getItem("email");
+      if (isLoggedIn) {
+        throw redirect({ to: "/my-rooms" });
+      }
+    },
   });

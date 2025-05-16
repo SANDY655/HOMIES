@@ -53,8 +53,7 @@ const indexRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  loginForm(rootRoute),
-  registerForm(rootRoute),
+
   DashboardRoute(rootRoute),
   PostRoomRoute(rootRoute),
   SearchRoomRoute(rootRoute),
