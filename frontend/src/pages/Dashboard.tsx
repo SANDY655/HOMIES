@@ -21,6 +21,41 @@ import socket from "../socket";
 import { createRoute, redirect, useNavigate } from "@tanstack/react-router";
 import type { RootRoute } from "@tanstack/react-router";
 
+function ConfirmLogout({
+  isOpen,
+  onConfirm,
+  onCancel,
+}: {
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-lg p-6 w-80 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-semibold mb-4">Confirm Logout</h3>
+        <p className="mb-6 text-gray-700">Are you sure you want to logout?</p>
+        <div className="flex justify-end gap-4">
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            Logout
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
   const userId = localStorage.getItem("userId");
@@ -28,6 +63,9 @@ export function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"mine" | "others">("mine");
+
+  // Confirmation modal open state
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const { data: chats, isLoading: loadingChats } = useQuery({
     queryKey: ["chats", userId],
@@ -77,9 +115,53 @@ export function Dashboard() {
     };
   }, [userId, chats, queryClient]);
 
-  const handleLogout = () => {
-    localStorage.clear();
+  // Logout handler with improvements
+  // Logout handler with improvements
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        // Optional: Call logout API if you want to track or invalidate sessions
+        await fetch("http://localhost:5000/api/user/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (err) {
+      console.warn(
+        "Logout API failed or not implemented. Proceeding with local logout."
+      );
+    }
+
+    // Disconnect Socket.IO if connected
+    if (socket.connected) {
+      socket.disconnect();
+    }
+
+    // Clear only auth-related keys
+    localStorage.removeItem("token");
+    localStorage.removeItem("email");
+    localStorage.removeItem("userId");
+
+    // Clear React Query cache
+    queryClient.clear();
+
+    // Redirect to login/home page
     navigate({ to: "/" });
+  };
+
+  // Logout button triggers modal
+
+  // Show confirmation modal on logout button click
+  const onLogoutClick = () => setLogoutModalOpen(true);
+  const onCancelLogout = () => setLogoutModalOpen(false);
+  const onConfirmLogout = () => {
+    setLogoutModalOpen(false);
+    handleLogout();
   };
 
   const handleRoomPosting = () => navigate({ to: "/post-room" });
@@ -107,12 +189,19 @@ export function Dashboard() {
           <Button
             variant="destructive"
             className="flex items-center gap-2"
-            onClick={handleLogout}
+            onClick={onLogoutClick}
           >
             <LogOut size={18} /> Logout
           </Button>
         </div>
       </nav>
+
+      {/* Confirm Logout Modal */}
+      <ConfirmLogout
+        isOpen={logoutModalOpen}
+        onConfirm={onConfirmLogout}
+        onCancel={onCancelLogout}
+      />
 
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-12 gap-8">
         <section className="col-span-12 md:col-span-7 bg-white rounded-2xl shadow overflow-hidden flex flex-col h-[calc(100vh-96px)]">
