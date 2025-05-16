@@ -28,7 +28,6 @@ export function Dashboard() {
     queryFn: async () => {
       const res = await fetch(`http://localhost:5000/api/chat/user/${userId}`);
       const data = await res.json();
-      console.log(data);
       if (!data.success)
         throw new Error(data.message || "Failed to fetch Chat");
       return data.chats;
@@ -41,7 +40,6 @@ export function Dashboard() {
     queryKey: ["myRooms", userId],
     queryFn: async () => {
       const res = await fetch(`http://localhost:5000/api/room/user/${userId}`);
-      console.log("bye" + userId);
       const data = await res.json();
       if (!data.success)
         throw new Error(data.message || "Failed to fetch rooms");
@@ -50,20 +48,13 @@ export function Dashboard() {
     enabled: !!userId,
   });
 
-  // Debug logs for data
-  console.log("User ID:", userId);
-  console.log("Chats fetched:", chats);
-  console.log("My Rooms fetched:", myRooms);
-
   const myRoomIds = myRooms?.map((room) => room._id.toString()) || [];
-  console.log("MyRoom IDs:", myRoomIds);
 
-  // Filter chats by tab selection with debug logs
+  // Filter chats by tab selection
   const filteredChats =
     chats?.filter((chat) => {
       const roomId = chat.roomId?.toString() || "";
       const isMine = myRoomIds.includes(roomId);
-      console.log(`Chat ${chat._id} roomId ${roomId} isMine? ${isMine}`);
       return activeTab === "mine" ? isMine : !isMine;
     }) || [];
 
@@ -154,11 +145,14 @@ export function Dashboard() {
             ) : (
               <ul className="divide-y divide-gray-200">
                 {filteredChats.map((chat) => {
-                  const otherUser = chat.members.find((m) => m._id !== userId);
+                  const otherUser = chat.members.find(
+                    (m) => m._id?.toString() !== userId
+                  );
+
                   return (
                     <li
                       key={chat._id}
-                      onClick={() => navigate({ to: `/chat/${chat._id}` })}
+                      onClick={() => navigate({ to: `/chat/${chat.roomId}` })}
                       className="flex items-center gap-4 p-4 rounded-lg cursor-pointer hover:bg-blue-50 transition"
                     >
                       <Avatar
