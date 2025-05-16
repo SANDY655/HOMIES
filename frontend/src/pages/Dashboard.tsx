@@ -7,7 +7,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
-import { MessageSquare, Home, Users, Settings, LogOut } from "lucide-react";
+import {
+  MessageSquare,
+  Home,
+  Users,
+  Settings,
+  LogOut,
+  DoorOpen,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import socket from "../socket";
@@ -22,7 +29,6 @@ export function Dashboard() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"mine" | "others">("mine");
 
-  // Get all chats
   const { data: chats, isLoading: loadingChats } = useQuery({
     queryKey: ["chats", userId],
     queryFn: async () => {
@@ -35,7 +41,6 @@ export function Dashboard() {
     enabled: !!userId,
   });
 
-  // Get rooms posted by this user
   const { data: myRooms } = useQuery({
     queryKey: ["myRooms", userId],
     queryFn: async () => {
@@ -50,7 +55,6 @@ export function Dashboard() {
 
   const myRoomIds = myRooms?.map((room) => room._id.toString()) || [];
 
-  // Filter chats by tab selection
   const filteredChats =
     chats?.filter((chat) => {
       const roomId = chat.roomId?.toString() || "";
@@ -81,10 +85,10 @@ export function Dashboard() {
   const handleRoomPosting = () => navigate({ to: "/post-room" });
   const handleFindRoommates = () => navigate({ to: "/find-roommates" });
   const handleSearchRooms = () => navigate({ to: "/search-rooms" });
+  const handleMyRooms = () => navigate({ to: "/my-rooms" });
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
       <nav className="flex items-center justify-between bg-white px-6 py-4 shadow h-14">
         <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
         <div className="flex items-center gap-4 min-w-[200px] justify-end">
@@ -110,9 +114,7 @@ export function Dashboard() {
         </div>
       </nav>
 
-      {/* Main layout */}
       <div className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-12 gap-8">
-        {/* Chat Section */}
         <section className="col-span-12 md:col-span-7 bg-white rounded-2xl shadow overflow-hidden flex flex-col h-[calc(100vh-96px)]">
           <header className="p-4 border-b border-gray-200 flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -148,7 +150,6 @@ export function Dashboard() {
                   const otherUser = chat.members.find(
                     (m) => m._id?.toString() !== userId
                   );
-
                   return (
                     <li
                       key={chat._id}
@@ -237,6 +238,27 @@ export function Dashboard() {
                 onClick={handleFindRoommates}
               >
                 Find Roommates
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition cursor-pointer p-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-900 text-lg font-semibold">
+                <DoorOpen size={20} />
+                My Rooms
+              </CardTitle>
+              <CardDescription className="text-gray-600 mt-2">
+                Manage your posted rooms.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <Button
+                size="md"
+                className="w-full rounded-md bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                onClick={handleMyRooms}
+              >
+                View My Rooms
               </Button>
             </CardContent>
           </Card>
