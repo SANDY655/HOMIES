@@ -148,10 +148,15 @@ export function LoginForm({
     </div>
   );
 }
-
 export default (parentRoute: RootRoute) =>
   createRoute({
     path: "/login",
-    component: LoginForm,
     getParentRoute: () => parentRoute,
+    component: LoginForm,
+    beforeLoad: () => {
+      const isLoggedIn = !!localStorage.getItem("email");
+      if (isLoggedIn) {
+        throw redirect({ to: "/my-rooms" });
+      }
+    },
   });

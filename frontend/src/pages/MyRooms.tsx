@@ -97,11 +97,12 @@ export function MyRooms() {
 export default (parentRoute: RootRoute) =>
   createRoute({
     path: "/my-rooms",
-    component: MyRooms,
     getParentRoute: () => parentRoute,
-    beforeLoad: ({ context, location }) => {
-      if (!context.auth.isAuthenticated()) {
-        throw redirect({ to: "/", search: { redirect: location.href } });
+    component: MyRooms,
+    beforeLoad: () => {
+      const isLoggedIn = !!localStorage.getItem("email");
+      if (!isLoggedIn) {
+        throw redirect({ to: "/login" });
       }
     },
   });
