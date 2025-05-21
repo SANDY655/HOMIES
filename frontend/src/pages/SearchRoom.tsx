@@ -6,6 +6,7 @@ import { createRoute, Link, redirect, RootRoute } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { useDebounce } from "@/hooks/useDebounce";
+
 interface Room {
   _id: string;
   title: string;
@@ -25,6 +26,58 @@ interface Room {
   };
 }
 
+function RoomCard({ room }: { room: Room }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % (room.images.length || 1));
+    }, 3000); // Change every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [room.images.length]);
+
+  return (
+    <Link to={`/rooms/${room._id}`}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        whileHover={{ scale: 1.02 }}
+        className="bg-white rounded-xl shadow-lg border hover:shadow-xl overflow-hidden"
+      >
+        <img
+          src={
+            room.images.length > 0
+              ? room.images[currentImageIndex]
+              : "https://via.placeholder.com/300x200?text=Room"
+          }
+          alt={room.title}
+          className="w-full h-48 object-cover transition-opacity duration-500"
+        />
+        <div className="p-4">
+          <h3 className="text-lg font-semibold">{room.title}</h3>
+          <p className="text-sm text-gray-500">{room.location}</p>
+          <p className="text-blue-600 font-bold text-sm mt-1">
+            ₹{room.rent} / month
+          </p>
+          <p className="text-xs text-gray-500">
+            Available: {format(new Date(room.availableFrom), "dd MMM yyyy")}
+          </p>
+          <p className="text-xs capitalize text-gray-600">{room.roomType}</p>
+          <p className="text-xs mt-1 text-gray-500">
+            {Object.entries(room.amenities)
+              .filter(([_, val]) => val)
+              .map(([key]) => key)
+              .join(", ") || "No amenities"}
+          </p>
+        </div>
+      </motion.div>
+    </Link>
+  );
+}
+
 export function SearchRoom() {
   const [searchQuery, setSearchQuery] = useState("");
   const [priceFilter, setPriceFilter] = useState("all");
@@ -33,9 +86,10 @@ export function SearchRoom() {
   const [availableFrom, setAvailableFrom] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { ref, inView } = useInView();
+
   const fetchRooms = async ({ pageParam }: { pageParam: number }) => {
     const params = new URLSearchParams();
-    const email = localStorage.getItem("email"); // ✅ get user email from localStorage
+    const email = localStorage.getItem("email");
     params.append("_page", pageParam.toString());
     params.append("_limit", "10");
     if (searchQuery) params.append("searchQuery", searchQuery);
@@ -43,13 +97,12 @@ export function SearchRoom() {
     if (roomTypeFilter !== "all")
       params.append("roomTypeFilter", roomTypeFilter);
     if (availableFrom) params.append("availableFrom", availableFrom);
-    if (email) params.append("email", email); // ✅ pass email
+    if (email) params.append("email", email);
     amenityFilters.forEach((amenity) => params.append("amenities", amenity));
 
     const res = await fetch(
       `http://localhost:5000/api/room/searchroom?${params.toString()}`
     );
-
     const json = await res.json();
     return json.data;
   };
@@ -176,46 +229,7 @@ export function SearchRoom() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence>
                 {data?.pages.flat().map((room) => (
-                  <Link to={`/rooms/${room._id}`} key={room._id}>
-                    <motion.div
-                      key={room._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-white rounded-xl shadow-lg border hover:shadow-xl overflow-hidden"
-                    >
-                      <img
-                        src={
-                          room.images[0] ||
-                          "https://via.placeholder.com/300x200?text=Room"
-                        }
-                        alt={room.title}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="p-4">
-                        <h3 className="text-lg font-semibold">{room.title}</h3>
-                        <p className="text-sm text-gray-500">{room.location}</p>
-                        <p className="text-blue-600 font-bold text-sm mt-1">
-                          ₹{room.rent} / month
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Available:{" "}
-                          {format(new Date(room.availableFrom), "dd MMM yyyy")}
-                        </p>
-                        <p className="text-xs capitalize text-gray-600">
-                          {room.roomType}
-                        </p>
-                        <p className="text-xs mt-1 text-gray-500">
-                          {Object.entries(room.amenities)
-                            .filter(([_, val]) => val)
-                            .map(([key]) => key)
-                            .join(", ") || "No amenities"}
-                        </p>
-                      </div>
-                    </motion.div>
-                  </Link>
+                  <RoomCard key={room._id} room={room} />
                 ))}
               </AnimatePresence>
             </div>
