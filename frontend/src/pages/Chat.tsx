@@ -51,6 +51,7 @@ const startOrFetchChat = async ({
     body: JSON.stringify({ userId, otherUserId, roomId }),
   });
   const data = await res.json();
+  console.log(data);
   if (!data.success) throw new Error("Chat start failed");
   return data.chat;
 };

@@ -18,6 +18,7 @@ import { z } from "zod";
 import { CheckCircleOutline } from "@mui/icons-material";
 import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion"; // Import framer-motion
+import axios from "axios";
 
 // Define the steps
 const steps = ["Room Details", "Photos", "Amenities", "Review & Confirm"];
@@ -91,13 +92,54 @@ export function PostRoom() {
     }
   };
 
-  const handleImageUrlChange = (e) => {
-    const { value } = e.target;
-    const updatedImages = value.split(",").map((url) => url.trim());
+  const handleRemoveImage = (indexToRemove) => {
     setForm((prev) => ({
       ...prev,
-      images: updatedImages,
+      images: prev.images.filter((_, i) => i !== indexToRemove),
     }));
+  };
+
+  const handleUpload = async (files) => {
+    try {
+      const validFiles = Array.from(files).filter((file) => {
+        const isValidType = file.type.startsWith("image/");
+        const isValidSize = file.size <= 5 * 1024 * 1024; // Max 5MB
+        return isValidType && isValidSize;
+      });
+
+      if (validFiles.length === 0) {
+        alert("Please upload valid image files under 5MB.");
+        return;
+      }
+
+      const { data } = await axios.post(
+        "http://localhost:5000/api/cloud/get-signature"
+      );
+
+      const uploaders = validFiles.map((file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", data.apiKey);
+        formData.append("timestamp", data.timestamp);
+        formData.append("signature", data.signature);
+        formData.append("folder", "mine");
+
+        return axios.post(
+          `https://api.cloudinary.com/v1_1/${data.cloudName}/image/upload`,
+          formData
+        );
+      });
+
+      const results = await Promise.all(uploaders);
+      const urls = results.map((res) => res.data.secure_url);
+
+      setForm((prev) => ({
+        ...prev,
+        images: [...prev.images, ...urls],
+      }));
+    } catch (error) {
+      console.error("Upload failed", error);
+    }
   };
 
   const validateStep = () => {
@@ -272,7 +314,7 @@ export function PostRoom() {
             </motion.div>
           </Stack>
         );
-      case 1:
+
         return (
           <Box>
             <motion.div
@@ -280,17 +322,12 @@ export function PostRoom() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <TextField
-                label="Image URLs (comma separated)"
-                name="images"
-                fullWidth
-                value={form.images.join(", ")}
-                onChange={handleImageUrlChange}
-                error={!!errors.images}
-                helperText={errors.images}
-                variant="outlined"
-                size="small"
-                sx={{ marginBottom: 2 }}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleUpload(e.target.files)}
+                style={{ marginTop: "10px" }}
               />
             </motion.div>
             <Stack direction="row" spacing={2} mt={3} flexWrap="wrap">
@@ -311,6 +348,76 @@ export function PostRoom() {
             </Stack>
           </Box>
         );
+      case 1:
+        return (
+          <Box>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Button
+                variant="outlined"
+                component="label"
+                sx={{ mt: 2, mb: 2 }}
+              >
+                Upload Images
+                <input
+                  hidden
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handleUpload(e.target.files)}
+                />
+              </Button>
+            </motion.div>
+
+            <Stack direction="row" spacing={2} flexWrap="wrap" mt={2}>
+              {form.images.map((url, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    position: "relative",
+                    width: 150,
+                    height: 150,
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    boxShadow: 3,
+                    marginBottom: 2,
+                  }}
+                >
+                  <Avatar
+                    src={url}
+                    variant="rounded"
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  />
+                  <Button
+                    size="small"
+                    onClick={() => handleRemoveImage(index)}
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      minWidth: "initial",
+                      padding: "4px",
+                      backgroundColor: "rgba(255,255,255,0.7)",
+                      ":hover": {
+                        backgroundColor: "rgba(255,0,0,0.8)",
+                        color: "white",
+                      },
+                    }}
+                  >
+                    ✕
+                  </Button>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        );
+
       case 2:
         return (
           <Box>
