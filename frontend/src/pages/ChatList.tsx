@@ -48,7 +48,6 @@ export function ChatList() {
   useEffect(() => {
     if (!userId) return;
     if (!socket.connected) socket.connect();
-    chats?.forEach((chat) => socket.emit("join_chat", chat._id));
     const onNewMessage = () => queryClient.invalidateQueries(["chats", userId]);
     socket.on("receive_message", onNewMessage);
     return () => socket.off("receive_message", onNewMessage);
