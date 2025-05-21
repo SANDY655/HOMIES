@@ -1,13 +1,11 @@
-// Chat.tsx
+import React, { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   createRoute,
-  redirect,
   RootRoute,
   useParams,
 } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import socket from "../socket";
+import socket from "@/lib/socket";
 import { ChatList } from "./ChatList";
 
 interface Message {
@@ -17,217 +15,281 @@ interface Message {
   sender: "user" | "owner";
   senderEmail: string;
   receiverEmail: string;
-  timestamp: string;
+  timestamp: string | Date;
 }
 
-const fetchRoom = async (roomId: string) => {
-  const res = await fetch(`http://localhost:5000/api/room/${roomId}`);
+// Fetch chat room by chatId
+async function fetchChatRoom(chatId: string) {
+  const res = await fetch(`http://localhost:5000/api/chatroom/${chatId}`);
   const data = await res.json();
-  if (!data.success) throw new Error("Room fetch failed");
-  return data.data;
-};
+  if (!data.success) throw new Error("Failed to fetch chatroom");
+  return data.data; // Should contain participants, roomId, latestMessage, etc
+}
 
-const fetchUserByEmail = async (email: string) => {
-  const res = await fetch(
-    `http://localhost:5000/api/user/by-email?email=${email}`
-  );
+// Fetch post by roomId (post ID)
+async function fetchRoom(roomId: string) {
+  const res = await fetch(`http://localhost:5000/api/posts/${roomId}`);
   const data = await res.json();
-  if (!data.success) throw new Error("User fetch failed");
+  if (!data.success) throw new Error("Failed to fetch room");
   return data.data;
-};
+}
 
-const startOrFetchChat = async ({
-  userId,
-  otherUserId,
-  roomId,
-}: {
-  userId: string;
-  otherUserId: string;
-  roomId: string;
-}) => {
-  const res = await fetch("http://localhost:5000/api/chat/start", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, otherUserId, roomId }),
+// Fetch user by userId or email
+async function fetchUser(userIdOrEmail: string) {
+  // If it's 24 length string, treat as id else email
+  const url =
+    userIdOrEmail.length === 24
+      ? `http://localhost:5000/api/users/${userIdOrEmail}`
+      : `http://localhost:5000/api/users/by-email?email=${encodeURIComponent(
+          userIdOrEmail
+        )}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!data.success) throw new Error("Failed to fetch user");
+  return data.data;
+}
+
+// Fetch messages by chatId
+async function fetchMessages(
+  chatId: string,
+  senderEmail: string,
+  receiverEmail: string
+) {
+  const res = await fetch(`http://localhost:5000/api/messages/${chatId}`);
+  const data = await res.json();
+  if (!data.success) throw new Error("Failed to fetch messages");
+  return data.messages.map((msg: any) => ({
+    ...msg,
+    text: msg.content,
+    senderEmail: msg.sender.email,
+    receiverEmail:
+      senderEmail === msg.sender.email ? receiverEmail : senderEmail,
+    sender: msg.sender.email === senderEmail ? "user" : "owner",
+    timestamp: msg.timestamp,
+  }));
+}
+
+const formatTimestamp = (timestamp: string | Date | undefined) => {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return "";
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
-  const data = await res.json();
-  console.log(data);
-  if (!data.success) throw new Error("Chat start failed");
-  return data.chat;
-};
-
-const fetchMessages = async (chatId: string) => {
-  const res = await fetch(`http://localhost:5000/api/chat/messages/${chatId}`);
-  const data = await res.json();
-  if (!data.success) throw new Error("Message fetch failed");
-  return data.messages;
 };
 
 export function Chat() {
-  const { roomId } = useParams({ strict: false }) as { roomId: string };
-  const senderEmail = (
-    localStorage.getItem("email") ?? "unknown@user.com"
-  ).replace(/^"|"$/g, "");
+  const { chatId } = useParams({ from: "/chat/$chatId" });
 
-  const [input, setInput] = useState("");
+  const rawEmail = localStorage.getItem("email") ?? "";
+  const senderEmail = rawEmail.replace(/^"|"$/g, "").trim();
+
   const [receiverEmail, setReceiverEmail] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Fetch chat room by chatId
+  const { data: chatRoom, isLoading: chatRoomLoading } = useQuery({
+    queryKey: ["chatRoom", chatId],
+    queryFn: () => fetchChatRoom(chatId),
+    enabled: !!chatId,
+  });
+
+  // console.log("ChatRoom", chatRoom);
+
+  // Fetch room (post) data by roomId from chatRoom
+  const roomId = chatRoom?.roomId?._id || "";
   const { data: roomData } = useQuery({
     queryKey: ["room", roomId],
     queryFn: () => fetchRoom(roomId),
+    enabled: !!roomId,
   });
 
+  // Determine receiverEmail (other participant)
   useEffect(() => {
-    if (roomData?.email) {
-      setReceiverEmail(roomData.email);
-    }
-  }, [roomData]);
+    if (!chatRoom) return;
+    const otherParticipant = chatRoom.participants.find(
+      (p: any) => p.email !== senderEmail
+    );
+    if (otherParticipant) setReceiverEmail(otherParticipant.email);
+  }, [chatRoom, senderEmail]);
+  useEffect(() => {
+    socket.on("receiveMessage", (msg) => {
+      // console.log("📥 Received in:", chatId, msg);
+    });
+  }, [chatId]);
 
+  // Fetch sender user info (to get _id)
   const { data: senderUser } = useQuery({
     queryKey: ["user", senderEmail],
-    queryFn: () => fetchUserByEmail(senderEmail),
-    enabled: !!roomData,
+    queryFn: () => fetchUser(senderEmail),
+    enabled: !!senderEmail,
   });
 
+  // Fetch receiver user info
   const { data: receiverUser } = useQuery({
     queryKey: ["user", receiverEmail],
-    queryFn: () => fetchUserByEmail(receiverEmail),
+    queryFn: () => fetchUser(receiverEmail),
     enabled: !!receiverEmail,
   });
 
-  const { data: chat } = useQuery({
-    queryKey: ["chat", senderUser?._id, receiverUser?._id, roomId],
-    queryFn: () =>
-      startOrFetchChat({
-        userId: senderUser._id,
-        otherUserId: receiverUser._id,
-        roomId,
-      }),
-    enabled: !!senderUser && !!receiverUser,
-  });
-
-  const { data: messages = [], refetch } = useQuery({
-    queryKey: ["messages", chat?._id],
-    queryFn: () => fetchMessages(chat._id),
-    enabled: !!chat?._id,
-  });
-
+  // Fetch messages for this chat
   useEffect(() => {
-    if (!chat?._id) return;
+    if (!chatId || !senderEmail || !receiverEmail) return;
+
+    fetchMessages(chatId, senderEmail, receiverEmail)
+      .then(setMessages)
+      .catch(console.error);
+  }, [chatId, senderEmail, receiverEmail]);
+
+  // Socket setup for real-time messages
+  useEffect(() => {
+    if (!chatId) return;
     if (!socket.connected) socket.connect();
-    socket.emit("join_chat", chat._id);
-    return () => socket.off("receive_message");
-  }, [chat?._id]);
 
-  useEffect(() => {
-    const handler = () => refetch();
-    socket.on("receive_message", handler);
-    return () => socket.off("receive_message", handler);
-  }, [refetch]);
+    socket.emit("joinRoom", chatId);
+    console.log(chatId, "Join chatId");
+    const handleReceiveMessage = (msg: Message) => {
+      setMessages((prev) => [...prev, msg]);
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
+    };
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    socket.on("receiveMessage", handleReceiveMessage);
 
+    return () => {
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.emit("leaveRoom", chatId); // Add this to leave previous room
+    };
+  }, [chatId]);
+
+  // Send message handler
   const sendMessage = async () => {
-    if (!input.trim() || !chat?._id) return;
-    const messageText = input.trim();
+    console.log("Send chatId", chatId);
+    // console.log("Send", senderUser);
+    if (!input.trim() || !chatId || !senderUser) return;
+
+    const content = input.trim();
     setInput("");
+
     try {
-      const res = await fetch("http://localhost:5000/api/chat/send", {
+      const res = await fetch("http://localhost:5000/api/messages/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          chatId: chat._id,
+          chatRoomId: chatId,
           senderId: senderUser._id,
-          text: messageText,
+          content,
         }),
       });
+
       const data = await res.json();
-      socket.emit("send_message", data.message);
+
+      if (!data.success) {
+        console.error("Send failed:", data.message);
+        return;
+      }
+      const senderInRoom = chatRoom?.participants.find(
+        (p) => p.email === senderEmail
+      );
+      const newMsg: Message = {
+        _id: data.message._id,
+        chatId,
+        text: data.message.content,
+        sender: senderUser._id === senderInRoom?._id ? "user" : "owner",
+        senderEmail,
+        receiverEmail,
+        timestamp: data.message.timestamp,
+      };
+
+      socket.emit("sendMessage", { chatId, message: newMsg });
+
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
     } catch (err) {
-      console.error("Send error", err);
+      console.error("Send error:", err);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter") sendMessage();
   };
 
+  if (chatRoomLoading) return <div>Loading chat...</div>;
+
   return (
-    <div className="flex w-full min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 gap-4">
-      {/* ChatList Sidebar */}
-      <div className="hidden lg:block w-80 shrink-0">
-        <ChatList />
-      </div>
-
-      {/* Chat Window */}
-      <div className="flex-1 max-w-full">
-        <div className="w-full h-[90vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
-          <div className="sticky top-0 z-10 bg-blue-700 text-white px-6 py-4 flex justify-between items-center shadow-md">
-            <h2 className="text-2xl font-bold">Chat Room</h2>
+    <div className="flex-1 max-w-full flex flex-col md:flex-row gap-6 px-4 py-6">
+      <ChatList chatId={chatId} />
+      <div className="w-full h-[90vh] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+        <div className="sticky top-0 z-10 bg-blue-700 text-white px-6 py-4 flex justify-between items-center shadow-md">
+          <h2 className="text-2xl font-semibold tracking-wide">Chat Room</h2>
+          <div>
+            <small>Post: {roomData?.title || "Untitled"}</small>
           </div>
+        </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 dark:bg-gray-800 scrollbar-thin scrollbar-thumb-blue-300 dark:scrollbar-thumb-blue-500 scrollbar-track-transparent">
-            {messages.length > 0 ? (
-              messages.map((msg, idx) => {
-                const isSender = msg.senderEmail === senderEmail;
-                return (
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 dark:bg-gray-800">
+          {messages.length ? (
+            messages.map((msg, i) => {
+              const isSender = msg.senderEmail === senderEmail;
+              return (
+                <div
+                  key={msg._id || i}
+                  className={`flex ${
+                    isSender ? "justify-end" : "justify-start"
+                  }`}
+                >
                   <div
-                    key={idx}
-                    className={`flex ${
-                      isSender ? "justify-end" : "justify-start"
+                    className={`rounded-2xl p-4 max-w-[70%] break-words whitespace-pre-wrap shadow-md transition-all duration-200 ${
+                      isSender
+                        ? "bg-blue-600 text-white rounded-br-none"
+                        : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none"
                     }`}
                   >
                     <div
-                      className={`max-w-[80%] px-5 py-3 rounded-2xl shadow-md text-sm relative ${
+                      className={`text-xs font-semibold mb-1 ${
                         isSender
-                          ? "bg-blue-600 text-white rounded-br-none"
-                          : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-bl-none"
+                          ? "text-gray-100 dark:text-gray-300"
+                          : "text-blue-400"
                       }`}
                     >
-                      <div className="text-[11px] mb-1 opacity-80 font-semibold select-none">
-                        {isSender ? "You" : msg.senderEmail}
-                      </div>
-                      <div>{msg.text}</div>
-                      <div className="text-[10px] text-right mt-1 text-gray-400 dark:text-gray-300 select-none">
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
+                      {msg.senderEmail}
+                    </div>
+                    <div className="text-sm">{msg.text}</div>
+                    <div className="text-[11px] text-right mt-2 text-gray-400 dark:text-gray-500">
+                      {formatTimestamp(msg.timestamp)}
                     </div>
                   </div>
-                );
-              })
-            ) : (
-              <div className="text-center text-sm text-gray-500 dark:text-gray-400 italic mt-6 select-none">
-                No messages yet.
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-gray-500 dark:text-gray-400">
+              No messages yet.
+            </p>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
 
-          <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
-              className="flex-1 px-5 py-3 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-            <button
-              onClick={sendMessage}
-              className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-6 py-3 rounded-full shadow transition focus:ring-4 focus:ring-blue-400"
-            >
-              Send
-            </button>
-          </div>
+        <div className="sticky bottom-0 z-10 bg-white dark:bg-gray-900 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+          <input
+            type="text"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full rounded-xl border border-gray-300 dark:border-gray-700 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       </div>
     </div>
@@ -236,12 +298,8 @@ export function Chat() {
 
 export default (parentRoute: RootRoute) =>
   createRoute({
-    path: "/chat/$roomId",
+    path: "/chat/$chatId",
     component: Chat,
     getParentRoute: () => parentRoute,
-    beforeLoad: ({ context, location }) => {
-      if (!context.auth.isAuthenticated()) {
-        throw redirect({ to: "/", search: { redirect: location.href } });
-      }
-    },
+  
   });
