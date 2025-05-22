@@ -72,6 +72,43 @@ async function postroom(req, res) {
     });
   }
 }
+
+const updateRoom = async (req, res) => {
+  const { roomId } = req.params;
+  const updateData = req.body;
+
+  try {
+    const updatedRoom = await RoomModel.findByIdAndUpdate(roomId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedRoom) {
+      return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+
+    res.json({ success: true, room: updatedRoom });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const deleteRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    const deletedRoom = await RoomModel.findByIdAndDelete(roomId);
+
+    if (!deletedRoom) {
+      return res.status(404).json({ success: false, message: "Room not found" });
+    }
+
+    res.json({ success: true, message: "Room deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 async function searchroom(req, res) {
   try {
     console.log("Received email in search:", req.query.email); // Add this log
@@ -190,4 +227,4 @@ async function getRoomsByUser(req, res) {
   }
 }
 
-module.exports = { postroom, searchroom, getroom, getRoomsByUser };
+module.exports = { postroom, searchroom, getroom, getRoomsByUser,updateRoom ,deleteRoom};
