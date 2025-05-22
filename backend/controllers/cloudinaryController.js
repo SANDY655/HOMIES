@@ -30,7 +30,9 @@ const deleteImageFromCloudinary = async (req, res) => {
     const { publicId } = req.body;
 
     if (!publicId) {
-      return res.status(400).json({ success: false, message: "Missing publicId" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing publicId" });
     }
 
     await cloudinary.uploader.destroy(publicId);
@@ -42,4 +44,4 @@ const deleteImageFromCloudinary = async (req, res) => {
   }
 };
 
-module.exports = { getSign ,deleteImageFromCloudinary};
+module.exports = { getSign, deleteImageFromCloudinary };

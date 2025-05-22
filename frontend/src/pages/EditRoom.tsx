@@ -67,6 +67,45 @@ export function EditRoom() {
     const publicId = `${folder}/${fileWithExt.split(".")[0]}`;
     return publicId;
   }
+  async function handleImageUpload(files) {
+    try {
+      const res = await fetch("http://localhost:5000/api/cloud/get-signature", {
+        method: "POST",
+      });
+      const { signature, timestamp, cloudName, apiKey } = await res.json();
+
+      const uploadedUrls = [];
+
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("api_key", apiKey);
+        formData.append("timestamp", timestamp);
+        formData.append("signature", signature);
+        formData.append("folder", "mine");
+
+        const uploadRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+        uploadedUrls.push(uploadData.secure_url);
+      }
+
+      // Add the new uploaded image URLs to formData.images
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls],
+      }));
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("Error uploading images.");
+    }
+  }
 
   async function handleDeleteImage(imgUrl) {
     try {
@@ -172,7 +211,16 @@ export function EditRoom() {
                   ))}
                 </div>
               </div>
-
+              {/* Upload new images */}
+              <div className="mt-4">
+                <Label className="block mb-2">Upload New Images</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handleImageUpload([...e.target.files])}
+                />
+              </div>
               {/* Preview images */}
               {formData.images?.length > 0 && (
                 <div>
