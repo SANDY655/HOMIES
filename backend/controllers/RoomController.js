@@ -132,7 +132,8 @@ const deleteRoom = async (req, res) => {
     res.json({
       success: true,
       message: "Room and associated images deleted successfully",
-    });t
+    });
+    t;
   } catch (error) {
     console.error("Error deleting room:", error);
     res.status(500).json({ success: false, message: error.message });

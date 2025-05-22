@@ -8,4 +8,3 @@ router.post("/get-signature", getSign);
 router.delete("/image", deleteImageFromCloudinary);
 
 module.exports = { router };
-a;
