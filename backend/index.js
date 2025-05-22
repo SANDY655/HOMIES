@@ -8,6 +8,7 @@ const { userRouter } = require("./routes/UserRouter");
 const { roomRouter } = require("./routes/RoomRouter");
 const { ChatRouter } = require("./routes/ChatRouter");
 const { MessageRouter } = require("./routes/MessageRouter");
+const { router } = require("./routes/cloudinaryRouter");
 
 const app = express();
 const server = http.createServer(app);
@@ -30,6 +31,7 @@ app.use("/api/user", userRouter);
 app.use("/api/room", roomRouter);
 app.use("/api/chat", ChatRouter);
 app.use("/api/message", MessageRouter);
+app.use("/api/cloud", router);
 
 // Socket.IO logic
 io.on("connection", (socket) => {

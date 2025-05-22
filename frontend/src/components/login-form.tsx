@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
 import { useState } from "react";
-import { createRoute, RootRoute } from "@tanstack/react-router";
+import { createRoute, redirect } from "@tanstack/react-router";
 import { useRouter } from "@tanstack/react-router";
 
 // Zod schema
