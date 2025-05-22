@@ -7,6 +7,7 @@ cloudinary.config({
   api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_API_SECRET,
 });
+
 async function getSign(req, res) {
   const timestamp = Math.round(new Date().getTime() / 1000);
   const signature = cloudinary.utils.api_sign_request(
@@ -24,4 +25,21 @@ async function getSign(req, res) {
   });
 }
 
-module.exports = { getSign };
+const deleteImageFromCloudinary = async (req, res) => {
+  try {
+    const { publicId } = req.body;
+
+    if (!publicId) {
+      return res.status(400).json({ success: false, message: "Missing publicId" });
+    }
+
+    await cloudinary.uploader.destroy(publicId);
+
+    res.json({ success: true, message: "Image deleted from Cloudinary" });
+  } catch (err) {
+    console.error("Error deleting image:", err);
+    res.status(500).json({ success: false, message: "Failed to delete image" });
+  }
+};
+
+module.exports = { getSign ,deleteImageFromCloudinary};

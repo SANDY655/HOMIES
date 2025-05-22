@@ -1,6 +1,12 @@
 const { RoomModel } = require("../models/RoomModel");
 const { UserModel } = require("../models/UserModel");
 const mongoose = require("mongoose");
+const cloudinary = require("cloudinary").v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 async function postroom(req, res) {
   try {
     const {
@@ -84,7 +90,9 @@ const updateRoom = async (req, res) => {
     });
 
     if (!updatedRoom) {
-      return res.status(404).json({ success: false, message: 'Room not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Room not found" });
     }
 
     res.json({ success: true, room: updatedRoom });
@@ -97,18 +105,39 @@ const deleteRoom = async (req, res) => {
   try {
     const { roomId } = req.params;
 
-    const deletedRoom = await RoomModel.findByIdAndDelete(roomId);
+    const room = await RoomModel.findById(roomId);
 
-    if (!deletedRoom) {
-      return res.status(404).json({ success: false, message: "Room not found" });
+    if (!room) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Room not found" });
     }
 
-    res.json({ success: true, message: "Room deleted successfully" });
+    // ⬇️ Extract public IDs from the image URLs
+    const publicIds = (room.images || []).map((url) => {
+      const parts = url.split("/");
+      const fileName = parts[parts.length - 1];
+      const publicId = fileName.split(".")[0]; // Remove file extension
+      return `${parts[parts.length - 2]}/${publicId}`; // folder/filename
+    });
+
+    // ⬇️ Delete each image from Cloudinary
+    for (const publicId of publicIds) {
+      await cloudinary.uploader.destroy(publicId);
+    }
+
+    // ⬇️ Delete room from database
+    await RoomModel.findByIdAndDelete(roomId);
+
+    res.json({
+      success: true,
+      message: "Room and associated images deleted successfully",
+    });
   } catch (error) {
+    console.error("Error deleting room:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 async function searchroom(req, res) {
   try {
     console.log("Received email in search:", req.query.email); // Add this log
@@ -227,4 +256,11 @@ async function getRoomsByUser(req, res) {
   }
 }
 
-module.exports = { postroom, searchroom, getroom, getRoomsByUser,updateRoom ,deleteRoom};
+module.exports = {
+  postroom,
+  searchroom,
+  getroom,
+  getRoomsByUser,
+  updateRoom,
+  deleteRoom,
+};

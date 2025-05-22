@@ -118,9 +118,9 @@ export function MyRooms() {
                       </ul>
                     </div>
 
-                    {room.images?.length > 1 && (
+                    {room.images?.length > 0 && (
                       <div className="grid grid-cols-3 gap-2 mb-4">
-                        {room.images.slice(1).map((img, idx) => (
+                        {room.images.map((img, idx) => (
                           <img
                             key={idx}
                             src={img}

@@ -26,6 +26,7 @@ export function EditRoom() {
       furnished: false,
       washingMachine: false,
     },
+    images: [],
   });
 
   const { data: room, isLoading } = useQuery({
@@ -33,7 +34,8 @@ export function EditRoom() {
     queryFn: async () => {
       const res = await fetch(`http://localhost:5000/api/room/${roomId}`);
       const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Failed to fetch room");
+      if (!data.success)
+        throw new Error(data.message || "Failed to fetch room");
       return data.data; // ✅ correct access
     },
   });
@@ -49,9 +51,44 @@ export function EditRoom() {
         location: room.location,
         roomType: room.roomType,
         amenities: room.amenities || {},
+        images: room.images,
       });
     }
   }, [room]);
+
+  function getPublicIdFromUrl(url) {
+    // Cloudinary URL example:
+    // https://res.cloudinary.com/demo/image/upload/v1620000000/folder_name/image_name.jpg
+    // We want 'folder_name/image_name' part without extension
+    // Simplified version:
+    const parts = url.split("/");
+    const fileWithExt = parts[parts.length - 1]; // e.g. image_name.jpg
+    const folder = parts[parts.length - 2]; // e.g. folder_name
+    const publicId = `${folder}/${fileWithExt.split(".")[0]}`;
+    return publicId;
+  }
+
+  async function handleDeleteImage(imgUrl) {
+    try {
+      const publicId = getPublicIdFromUrl(imgUrl);
+      const res = await fetch("http://localhost:5000/api/cloud/image", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicId }),
+      });
+      const data = await res.json();
+      if (!data.success)
+        throw new Error(data.message || "Failed to delete image");
+
+      // Remove image from formData.images
+      setFormData((prev) => ({
+        ...prev,
+        images: prev.images.filter((img) => img !== imgUrl),
+      }));
+    } catch (error) {
+      alert("Error deleting image: " + error.message);
+    }
+  }
 
   const updateMutation = useMutation({
     mutationFn: async (updatedRoom) => {
@@ -94,7 +131,14 @@ export function EditRoom() {
           <Card>
             <CardContent className="p-6 space-y-6">
               {/* Basic fields */}
-              {["title", "description", "location", "rent", "deposit", "roomType"].map((field) => (
+              {[
+                "title",
+                "description",
+                "location",
+                "rent",
+                "deposit",
+                "roomType",
+              ].map((field) => (
                 <div key={field}>
                   <Label htmlFor={field}>
                     {field.charAt(0).toUpperCase() + field.slice(1)}
@@ -113,7 +157,10 @@ export function EditRoom() {
                 <Label className="block mb-2">Amenities</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(formData.amenities).map(([key, value]) => (
-                    <label key={key} className="flex items-center gap-2 capitalize">
+                    <label
+                      key={key}
+                      className="flex items-center gap-2 capitalize"
+                    >
                       <input
                         type="checkbox"
                         name={key}
@@ -127,17 +174,27 @@ export function EditRoom() {
               </div>
 
               {/* Preview images */}
-              {room.images?.length > 0 && (
+              {formData.images?.length > 0 && (
                 <div>
                   <Label className="block mb-2">Room Images</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {room.images.map((img, idx) => (
-                      <img
-                        key={idx}
-                        src={img}
-                        alt={`Room image ${idx + 1}`}
-                        className="h-24 w-full object-cover rounded"
-                      />
+                  <div className="grid grid-cols-3 gap-4">
+                    {formData.images.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <img
+                          src={img}
+                          alt={`Room image ${idx + 1}`}
+                          className="h-24 w-full object-cover rounded"
+                        />
+                        {/* Delete button overlay */}
+                        <button
+                          onClick={() => handleDeleteImage(img)}
+                          title="Delete image"
+                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          type="button"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
