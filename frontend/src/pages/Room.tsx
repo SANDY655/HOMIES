@@ -61,7 +61,6 @@ export function Room() {
         const res = await fetch(`http://localhost:5000/api/room/${roomId}`);
         const data = await res.json();
         if (data.success) {
-          console.log("Room data:", data.data);
           setRoom(data.data);
         }
       } catch (error) {
@@ -175,8 +174,8 @@ export function Room() {
 
   const handleContactOwner = async () => {
     try {
-      console.log("Other user Id", room.userId);
-      console.log("Room Id", room._id);
+      // console.log("Other user Id", room.userId);
+      // console.log("Room Id", room._id);
       const res = await fetch(
         "http://localhost:5000/api/chatroom/createOrGet",
         {
@@ -191,7 +190,7 @@ export function Room() {
       );
 
       const data = await res.json();
-      console.log("Chat room data:", data);
+      // console.log("Chat room data:", data);
       if (data._id) {
         navigate({ to: `/chat/${data._id}` });
       } else {
