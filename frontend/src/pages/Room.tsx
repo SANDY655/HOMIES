@@ -11,12 +11,12 @@ import {
   Popup,
   Polyline,
 } from "react-leaflet";
-
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import "leaflet/dist/leaflet.css";
+import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
 
 interface Room {
   _id: string;
@@ -39,6 +39,7 @@ interface Room {
 }
 
 export function Room() {
+  const currentUserId = getCurrentUserIdFromToken();
   const { roomId } = useParams({ strict: false }) as { roomId: string };
   const [room, setRoom] = useState<Room | null>(null);
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ export function Room() {
         const res = await fetch(`http://localhost:5000/api/room/${roomId}`);
         const data = await res.json();
         if (data.success) {
+          console.log("Room data:", data.data);
           setRoom(data.data);
         }
       } catch (error) {
@@ -170,6 +172,35 @@ export function Room() {
 
   const prettyAmenity = (key: string) =>
     key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
+
+  const handleContactOwner = async () => {
+    try {
+      console.log("Other user Id", room.userId);
+      console.log("Room Id", room._id);
+      const res = await fetch(
+        "http://localhost:5000/api/chatroom/createOrGet",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId1: currentUserId, // Get current user ID from auth context or state
+            userId2: room.userId, // Or room owner's user ID if you have it
+            roomId: room._id,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      console.log("Chat room data:", data);
+      if (data._id) {
+        navigate({ to: `/chat/${data._id}` });
+      } else {
+        alert("Failed to open chat room");
+      }
+    } catch (err) {
+      console.error("Error opening chat:", err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-indigo-50 via-white to-indigo-50 px-6 py-12 md:px-20 lg:px-36">
@@ -310,7 +341,7 @@ export function Room() {
             </div>
 
             <button
-              onClick={() => navigate({ to: `/chat/${room._id}` })}
+              onClick={handleContactOwner}
               className="w-full md:w-auto px-10 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-transform transform hover:scale-[1.05]"
               aria-label="Contact room owner"
             >

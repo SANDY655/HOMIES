@@ -4,6 +4,7 @@ const { connectDB } = require("./connectDB");
 const { userRouter } = require("./routes/UserRouter");
 const { roomRouter } = require("./routes/RoomRouter");
 const { router } = require("./routes/cloudinaryRouter");
+const chatRoomRouter = require("./routes/ChatRoomRoutes");
 
 const app = express();
 // Middleware
@@ -13,8 +14,8 @@ app.use(express.json());
 // API RoutesA
 app.use("/api/user", userRouter);
 app.use("/api/room", roomRouter);
-
 app.use("/api/cloud", router);
+app.use("/api/chatroom", chatRoomRouter);
 
 // Start server after DB connection
 connectDB().then(() => {
