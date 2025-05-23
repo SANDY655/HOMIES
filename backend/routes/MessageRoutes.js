@@ -1,5 +1,8 @@
 const express = require("express");
-const { saveMessage, getMessagesByChatRoom } = require("../controllers/MessageController");
+const {
+  saveMessage,
+  getMessagesByChatRoom,
+} = require("../controllers/MessageController");
 
 const router = express.Router();
 

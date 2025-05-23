@@ -15,30 +15,35 @@ export function ChatRoom() {
   const currentUserId = getCurrentUserIdFromToken();
 
   const [messages, setMessages] = useState<
-    { text: string; sender: string; timestamp: string }[]
+    { text: string; senderId: string; senderEmail: string; timestamp: string }[]
   >([]);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-  const fetchMessages = async () => {
-    try {
-      const res = await axios.get(`http://localhost:5000/api/message/${chatRoomId}`);
-      const formattedMessages = res.data.map((msg: any) => ({
-        text: msg.content,
-        sender: typeof msg.sender === "object" ? msg.sender._id : msg.sender,
-        timestamp: msg.timestamp,
-      }));
-      setMessages(formattedMessages);
-    } catch (err) {
-      console.error("Error fetching messages:", err);
-    }
-  };
+    const fetchMessages = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/message/${chatRoomId}`
+        );
+        const formattedMessages = res.data.map((msg: any) => ({
+          text: msg.content,
+          senderId:
+            typeof msg.sender === "object" ? msg.sender._id : msg.sender,
+          senderEmail: typeof msg.sender === "object" ? msg.sender.email : "",
+          timestamp: msg.timestamp,
+        }));
 
-  fetchMessages();
-}, [chatRoomId]);
+        setMessages(formattedMessages);
+      } catch (err) {
+        console.error("Error fetching messages:", err);
+      }
+    };
 
-  // Scroll to bottom
+    fetchMessages();
+  }, [chatRoomId]);
+
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -50,8 +55,15 @@ export function ChatRoom() {
 
     socket.emit("joinRoom", chatRoomId);
 
-    const handleMessage = (message: any) => {
-      setMessages((prev) => [...prev, message]);
+    const handleMessage = (msg: any) => {
+      // Ensure msg has senderId and senderEmail fields
+      const newMsg = {
+        text: msg.message || msg.text,
+        senderId: msg.sender || "",
+        senderEmail: msg.senderEmail || "Unknown",
+        timestamp: msg.timestamp || new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, newMsg]);
     };
 
     socket.on("receiveMessage", handleMessage);
@@ -67,7 +79,8 @@ export function ChatRoom() {
 
     const msg = {
       text: newMessage,
-      sender: currentUserId,
+      senderId: currentUserId,
+      senderEmail: "Me",
       timestamp: new Date().toISOString(),
     };
 
@@ -106,13 +119,13 @@ export function ChatRoom() {
               <div
                 key={idx}
                 className={`p-2 rounded shadow w-fit max-w-[60%] ${
-                  msg.sender === currentUserId
+                  msg.senderId === currentUserId
                     ? "bg-indigo-200 self-end"
                     : "bg-white self-start"
                 }`}
               >
                 <div className="text-sm font-semibold">
-                  {msg.sender === currentUserId ? "Me" : msg.sender}
+                  {msg.senderId === currentUserId ? "Me" : msg.senderEmail}
                 </div>
                 <div>{msg.text}</div>
                 <div className="text-xs text-gray-500">

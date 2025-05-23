@@ -7,6 +7,7 @@ const { roomRouter } = require("./routes/RoomRouter");
 const { router } = require("./routes/cloudinaryRouter");
 const messageRouter = require("./routes/MessageRoutes"); // ✅ import
 const chatRoomRouter = require("./routes/ChatRoomRoutes");
+const { UserModel } = require("./models/UserModel");
 
 const app = express();
 const server = http.createServer(app);
@@ -42,8 +43,16 @@ io.on("connection", (socket) => {
     console.log(`✅ User joined room: ${roomId}`);
   });
 
-  socket.on("sendMessage", ({ roomId, message, sender }) => {
-    const msg = { text: message, sender, timestamp: new Date().toISOString() };
+  socket.on("sendMessage", async ({ roomId, message, sender }) => {
+    const user = await UserModel.findById(sender).select("email");
+    const senderEmail = user?.email || "Unknown";
+
+    const msg = {
+      message,
+      sender,
+      senderEmail,
+      timestamp: new Date().toISOString(),
+    };
     socket.to(roomId).emit("receiveMessage", msg);
   });
 
