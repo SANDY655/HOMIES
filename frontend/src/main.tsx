@@ -8,12 +8,10 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import DemoTable from "./routes/demo.table";
-import DemoTanstackQuery from "./routes/demo.tanstack-query";
 
-import Header from "./components/Header";
 
-import TanstackQueryLayout from "./integrations/tanstack-query/layout";
+import 'leaflet/dist/leaflet.css';
+
 
 import * as TanstackQuery from "./integrations/tanstack-query/root-provider";
 
@@ -59,8 +57,6 @@ const routeTree = rootRoute.addChildren([
   SearchRoomRoute(rootRoute),
   FindingRoommatesRoute(rootRoute),
   MyRoomsRoute(rootRoute),
-  DemoTable(rootRoute),
-  DemoTanstackQuery(rootRoute),
   RoomRoute(rootRoute),
   ChatRoute(rootRoute),
   EditRoomRoute(rootRoute),

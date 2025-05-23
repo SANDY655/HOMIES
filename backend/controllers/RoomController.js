@@ -240,14 +240,7 @@ async function getroom(req, res) {
 }
 async function getRoomsByUser(req, res) {
   try {
-    console.log(req.params);
     const { id: userId } = req.params;
-    console.log(userId);
-    // if (!mongoose.Types.ObjectId.isValid(userId)) {
-    //   return res
-    //     .status(400)
-    //     .json({ message: "Invalid user ID", success: false, error: true });
-    // }
     const rooms = await RoomModel.find({ userId }); // Query by userId field
     return res.status(200).json({ rooms, success: true, error: false });
   } catch (error) {
