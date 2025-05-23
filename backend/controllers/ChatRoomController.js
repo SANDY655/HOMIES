@@ -30,4 +30,26 @@ const createOrGetChatRoom = async (req, res) => {
   }
 };
 
-module.exports = { createOrGetChatRoom };
+const getChatRoomDetails = async (req, res) => {
+  const { chatRoomId } = req.params;
+
+  try {
+    const chatRoom = await ChatRoom.findById(chatRoomId)
+      .populate("participants", "email") // get participant emails
+      .populate("roomId", "title"); // get room title & location
+
+    if (!chatRoom) {
+      return res.status(404).json({ message: "ChatRoom not found" });
+    }
+
+    res.status(200).json(chatRoom);
+  } catch (error) {
+    console.error("Error fetching chat room:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = {
+  createOrGetChatRoom,
+  getChatRoomDetails,
+};

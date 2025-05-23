@@ -19,6 +19,24 @@ export function ChatRoom() {
   >([]);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [roomTitle, setRoomTitle] = useState("Chat Room");
+
+  useEffect(() => {
+    const fetchRoomInfo = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/chatroom/${chatRoomId}`
+        );
+        const chatRoom = res.data;
+
+        setRoomTitle(chatRoom.roomId.title);
+      } catch (error) {
+        console.error("Failed to fetch chat room info:", error);
+      }
+    };
+
+    fetchRoomInfo();
+  }, [chatRoomId, currentUserId]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -106,8 +124,11 @@ export function ChatRoom() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <header className="p-4 bg-indigo-600 text-white text-lg font-semibold shadow">
+      <header className="p-4 bg-indigo-600 text-white text-lg font-semibold shadow flex items-center justify-between">
         Chat Room
+        <div className="p-2 text-white text-center font-medium">
+          Title: {roomTitle}
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto px-4 py-2">
