@@ -21,8 +21,7 @@ import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
 
 import App from "./App.tsx";
-import loginForm, { LoginForm } from "./components/login-form.tsx";
-import registerForm from "./components/register-form.tsx";
+
 import DashboardRoute from "./pages/Dashboard.tsx";
 import PostRoomRoute from "./pages/PostRoom.tsx";
 import FindingRoommatesRoute from "./pages/FindRoomates.tsx";
@@ -31,15 +30,16 @@ import RoomRoute from "./pages/Room.tsx";
 import MyRoomsRoute from "./pages/MyRooms.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ChatRoute from "./pages/Chat.tsx";
+import EditRoomRoute  from "./pages/EditRoom.tsx";
 const queryClient = new QueryClient();
 const rootRoute = createRootRoute({
   component: () => (
     <>
       <QueryClientProvider client={queryClient}>
-        <Header />
+        {/* <Header /> */}
         <Outlet />
-        <TanStackRouterDevtools />
-        <TanstackQueryLayout />
+        {/* <TanStackRouterDevtools /> */}
+        {/* <TanstackQueryLayout /> */}
       </QueryClientProvider>
     </>
   ),
@@ -63,6 +63,7 @@ const routeTree = rootRoute.addChildren([
   DemoTanstackQuery(rootRoute),
   RoomRoute(rootRoute),
   ChatRoute(rootRoute),
+  EditRoomRoute(rootRoute),
 ]);
 
 const router = createRouter({
