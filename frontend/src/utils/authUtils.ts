@@ -31,6 +31,8 @@ export function scheduleAutoLogout(navigate: (opts: { to: string }) => void) {
 
 export function handleAutoLogout(navigate: (opts: { to: string }) => void) {
   const token = localStorage.getItem("token");
+  
+
   if (token) {
     fetch("http://localhost:5000/api/user/logout", {
       method: "POST",
