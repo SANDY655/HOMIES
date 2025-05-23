@@ -165,7 +165,6 @@ export function Dashboard() {
   };
 
   const handleRoomPosting = () => navigate({ to: "/post-room" });
-  const handleFindRoommates = () => navigate({ to: "/find-roommates" });
   const handleSearchRooms = () => navigate({ to: "/search-rooms" });
   const handleMyRooms = () => navigate({ to: "/my-rooms" });
 
@@ -306,27 +305,6 @@ export function Dashboard() {
                 onClick={handleSearchRooms}
               >
                 Search Rooms
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition cursor-pointer p-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-gray-900 text-lg font-semibold">
-                <Users size={20} />
-                Find Roommates
-              </CardTitle>
-              <CardDescription className="text-gray-600 mt-2">
-                Connect with potential roommates.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <Button
-                size="md"
-                className="w-full rounded-full bg-green-600 hover:bg-green-700 text-white font-semibold"
-                onClick={handleFindRoommates}
-              >
-                Find Roommates
               </Button>
             </CardContent>
           </Card>

@@ -4,7 +4,13 @@ import {
   RootRoute,
   useNavigate,
 } from "@tanstack/react-router";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+} from "react-leaflet";
 
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -36,8 +42,14 @@ export function Room() {
   const { roomId } = useParams({ strict: false }) as { roomId: string };
   const [room, setRoom] = useState<Room | null>(null);
   const navigate = useNavigate();
-  const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [coordinates, setCoordinates] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
   const [loadingCoords, setLoadingCoords] = useState(false);
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]); // Route polyline coords
 
@@ -106,7 +118,10 @@ export function Room() {
 
   // Fetch route between userLocation and room location from OpenRouteService
   useEffect(() => {
-    async function fetchRoute(userLoc: { lat: number; lon: number }, roomLoc: { lat: number; lon: number }) {
+    async function fetchRoute(
+      userLoc: { lat: number; lon: number },
+      roomLoc: { lat: number; lon: number }
+    ) {
       try {
         const response = await fetch(
           "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
@@ -114,7 +129,8 @@ export function Room() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: "5b3ce3597851110001cf6248864dc0922459441f9b022ef3c8bd7602", // <-- Replace with your OpenRouteService API key
+              Authorization:
+                "5b3ce3597851110001cf6248864dc0922459441f9b022ef3c8bd7602", // <-- Replace with your OpenRouteService API key
             },
             body: JSON.stringify({
               coordinates: [
@@ -128,7 +144,10 @@ export function Room() {
         if (data.features && data.features.length > 0) {
           const coords = data.features[0].geometry.coordinates;
           // Flip [lon, lat] to [lat, lon] for Leaflet
-          const latLngs = coords.map(([lon, lat]: [number, number]) => [lat, lon]);
+          const latLngs = coords.map(([lon, lat]: [number, number]) => [
+            lat,
+            lon,
+          ]);
           setRouteCoords(latLngs);
         }
       } catch (err) {
@@ -202,7 +221,9 @@ export function Room() {
               <span className="text-4xl font-extrabold text-indigo-700 drop-shadow">
                 ₹{room.rent.toLocaleString("en-IN")}
               </span>
-              <span className="text-lg font-semibold text-gray-600">/ month</span>
+              <span className="text-lg font-semibold text-gray-600">
+                / month
+              </span>
             </div>
             <p className="text-gray-600 font-medium mb-12">
               Deposit: ₹{room.deposit.toLocaleString("en-IN")}
@@ -212,7 +233,9 @@ export function Room() {
             </p>
             <div className="space-y-4 text-gray-700 text-sm">
               <p>
-                <span className="font-semibold text-gray-800">Available From:</span>{" "}
+                <span className="font-semibold text-gray-800">
+                  Available From:
+                </span>{" "}
                 <time dateTime={room.availableFrom}>
                   {new Date(room.availableFrom).toLocaleDateString(undefined, {
                     year: "numeric",
@@ -241,14 +264,20 @@ export function Room() {
             </p>
 
             <div className="mt-12 w-full">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-800">Location Map</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+                Location Map
+              </h2>
               {loadingCoords && <p>Loading map...</p>}
               {!loadingCoords && coordinates ? (
                 <MapContainer
                   center={[coordinates.lat, coordinates.lon]}
                   zoom={13}
                   scrollWheelZoom={false}
-                  style={{ height: "300px", borderRadius: "1rem", width: "100%" }}
+                  style={{
+                    height: "300px",
+                    borderRadius: "1rem",
+                    width: "100%",
+                  }}
                 >
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -265,7 +294,11 @@ export function Room() {
                       {routeCoords.length > 0 && (
                         <Polyline
                           positions={routeCoords}
-                          pathOptions={{ color: "blue", weight: 5, opacity: 0.8 }}
+                          pathOptions={{
+                            color: "blue",
+                            weight: 5,
+                            opacity: 0.8,
+                          }}
                         />
                       )}
                     </>
