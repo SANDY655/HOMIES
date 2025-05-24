@@ -2,6 +2,7 @@ import {
   createRoute,
   redirect,
   useNavigate,
+  useSearch,
   type RootRoute,
 } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
@@ -11,13 +12,16 @@ import { ChatRoomPane } from "./ChatRoomPane";
 
 export function ChatWithSidebar() {
   const currentUserId = getCurrentUserIdFromToken();
-  const navigate = useNavigate(); // <-- initialize navigate
+  const navigate = useNavigate();
+  const { chatRoomId } = useSearch({ strict: false }) as {
+    chatRoomId?: string;
+  };
 
-  const [activeChatRoomId, setActiveChatRoomId] = useState<string | null>(null);
   const [chatRooms, setChatRooms] = useState<any[]>([]);
-  const [selectedTab, setSelectedTab] = useState<"myChats" | "ownerChats">(
-    "myChats"
-  );
+  // No tab selected initially
+  const [selectedTab, setSelectedTab] = useState<
+    "myChats" | "ownerChats" | undefined
+  >(undefined);
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -28,10 +32,7 @@ export function ChatWithSidebar() {
           `http://localhost:5000/api/chatroom/${currentUserId}`
         );
         setChatRooms(res.data);
-
-        if (res.data.length > 0) {
-          setActiveChatRoomId(res.data[0]._id);
-        }
+        // DO NOT auto-select chatRoomId here
       } catch (error) {
         console.error("Failed to fetch chat rooms:", error);
       }
@@ -39,6 +40,24 @@ export function ChatWithSidebar() {
 
     fetchChatRooms();
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (!chatRoomId || chatRooms.length === 0 || !currentUserId) {
+      // No chat room selected — clear tab selection
+      setSelectedTab(undefined);
+      return;
+    }
+
+    const selectedRoom = chatRooms.find((room) => room._id === chatRoomId);
+
+    if (!selectedRoom) {
+      setSelectedTab(undefined);
+      return;
+    }
+
+    const isMyChat = selectedRoom.roomId?.userId?._id === currentUserId;
+    setSelectedTab(isMyChat ? "myChats" : "ownerChats");
+  }, [chatRoomId, chatRooms, currentUserId]);
 
   const myChats = chatRooms.filter(
     (room) => room.roomId?.userId?._id === currentUserId
@@ -57,9 +76,17 @@ export function ChatWithSidebar() {
       return (
         <li
           key={room._id}
-          onClick={() => setActiveChatRoomId(room._id)}
-          className={`cursor-pointer p-3 border-b last:border-none hover:bg-indigo-100 rounded ${
-            room._id === activeChatRoomId ? "bg-indigo-300 font-semibold" : ""
+          onClick={() => {
+            navigate({
+              search: (prev) => ({
+                ...prev,
+                chatRoomId: room._id,
+              }),
+            });
+            // tab selection will update on effect via chatRoomId change
+          }}
+          className={`cursor-pointer p-3 border-none hover:bg-indigo-100 rounded ${
+            room._id === chatRoomId ? "bg-indigo-300 font-semibold" : ""
           }`}
         >
           <div className="text-sm truncate">{displayName}</div>
@@ -76,10 +103,8 @@ export function ChatWithSidebar() {
       <aside className="w-80 border-r border-gray-300 bg-white flex flex-col">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-300">
           <button
-            onClick={() => navigate({ to: "/dashboard" })}
-            title="Back to Dashboard"
-            aria-label="Back to Dashboard"
-            className="p-1 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center"
+            onClick={() => navigate({ to: "/dashboard", search: {} })}
+            className="p-1 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -88,7 +113,6 @@ export function ChatWithSidebar() {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={2}
-              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -115,7 +139,7 @@ export function ChatWithSidebar() {
           <button
             className={`w-full py-2 font-semibold ${
               selectedTab === "ownerChats"
-                ? "border-b-2 border-green-500 text-green-600"
+                ? "border-b-2 border-indigo-500 text-indigo-600"
                 : "text-gray-500"
             }`}
             onClick={() => setSelectedTab("ownerChats")}
@@ -125,15 +149,13 @@ export function ChatWithSidebar() {
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 px-4 py-2 overflow-auto">
-          <ul
-            className={`border rounded ${
-              selectedTab === "myChats"
-                ? "border-indigo-200"
-                : "border-green-200"
-            }`}
-          >
-            {selectedTab === "myChats" ? (
+        <div className="flex-1 overflow-auto">
+          <ul>
+            {!selectedTab ? (
+              <li className="p-4 text-center text-gray-400">
+                Select a tab to view chats
+              </li>
+            ) : selectedTab === "myChats" ? (
               myChats.length > 0 ? (
                 renderChatList(myChats)
               ) : (
@@ -150,19 +172,19 @@ export function ChatWithSidebar() {
 
       {/* Chat Room Pane */}
       <main className="flex-1 flex flex-col bg-white">
-        {activeChatRoomId ? (
-          <ChatRoomPane chatRoomId={activeChatRoomId} />
-        ) : (
+        {!chatRoomId ? (
           <div className="flex items-center justify-center flex-grow text-gray-500">
-            Select a chat room from the sidebar
+            Start a chat by selecting a chat room from the sidebar
           </div>
+        ) : (
+          <ChatRoomPane chatRoomId={chatRoomId} />
         )}
       </main>
     </div>
   );
 }
 
-// TanStack Router route definition
+// Route definition (unchanged)
 export default (parentRoute: RootRoute) =>
   createRoute({
     path: "/chatwithsidebar",
