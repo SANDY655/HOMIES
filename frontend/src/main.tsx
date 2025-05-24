@@ -26,7 +26,7 @@ import MyRoomsRoute from "./pages/MyRooms.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import EditRoomRoute from "./pages/EditRoom.tsx";
 import ChatRoomRoute from "./pages/ChatRoom.tsx";
-import  ChatWithSidebarRoute  from "./pages/ChatWithSidebar.tsx";
+import ChatWithSidebarRoute from "./pages/ChatWithSidebar.tsx";
 const queryClient = new QueryClient();
 const rootRoute = createRootRoute({
   component: () => (
