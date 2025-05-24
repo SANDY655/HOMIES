@@ -100,25 +100,17 @@ export function Dashboard() {
       <header className="bg-white shadow-sm px-6 py-3 flex items-center justify-between sticky top-0 z-40">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
         <div className="flex items-center gap-4">
-            <Button
-      variant="ghost"
-      className="gap-2 text-sm text-gray-700"
-      onClick={() => navigate({ to: "/chatwithsidebar" })}
-      aria-label="Open Chat"
-      title="Open Chat"
-    >
-      <MessageSquare size={18} />
-      Chat
-    </Button>
-          <Avatar
-            src={email?.avatar || "/img2.png"}
-            alt="User Avatar"
-            title={email?.email || ""}
-            className="w-10 h-10 border"
-          />
-          <Button variant="ghost" className="gap-2 text-sm text-gray-700">
-            <Settings size={18} /> Settings
+          <Button
+            variant="ghost"
+            className="gap-1 flex items-center justify-center p-5 m-1 text-sm text-gray-700  hover:bg-gray-200"
+            onClick={() => navigate({ to: "/chatwithsidebar" })}
+            aria-label="Open Chat"
+            title="Open Chat"
+          >
+            <MessageSquare size={20} />
+            Chat
           </Button>
+
           <Button
             variant="destructive"
             className="gap-2 text-sm"
