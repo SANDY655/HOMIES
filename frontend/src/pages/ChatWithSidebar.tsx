@@ -89,7 +89,7 @@ export function ChatWithSidebar() {
               stroke="currentColor"
               strokeWidth={2}
               aria-hidden="true"
-            >
+            >4
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
