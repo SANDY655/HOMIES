@@ -36,13 +36,21 @@ const getUserChatRooms = async (req, res) => {
     const chatRooms = await ChatRoom.find({
       participants: userId,
     })
-      .populate('participants', 'email avatar') // populate participants info you want
-      .populate('latestMessage') // optional, if you want to show latest message preview
+      .populate("participants", "email avatar") // populate participants info you want
+      .populate({
+        path: "roomId", // populate the Room document
+        populate: {
+          path: "userId", // inside Room, populate the User (owner)
+          select: "_id email", // select only fields you want
+        },
+      })
+      .populate("latestMessage") // optional, if you want to show latest message preview
       .sort({ updatedAt: -1 });
+
     res.status(200).json(chatRooms);
   } catch (error) {
     console.error("Failed to get user's chat rooms:", error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
