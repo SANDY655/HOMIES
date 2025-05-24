@@ -8,9 +8,9 @@ export function ChatWithSidebar() {
   const currentUserId = getCurrentUserIdFromToken();
   const [activeChatRoomId, setActiveChatRoomId] = useState<string | null>(null);
   const [chatRooms, setChatRooms] = useState<any[]>([]);
-  const [openSection, setOpenSection] = useState<
-    "myChats" | "ownerChats" | null
-  >("myChats");
+  const [selectedTab, setSelectedTab] = useState<"myChats" | "ownerChats">(
+    "myChats"
+  );
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -71,64 +71,51 @@ export function ChatWithSidebar() {
           Chats
         </h2>
 
-        <div className="flex-1 px-2 py-4 space-y-4">
-          {/* My Chats Accordion */}
-          <div>
-            <button
-              onClick={() =>
-                setOpenSection(openSection === "myChats" ? null : "myChats")
-              }
-              className="w-full flex justify-between items-center px-4 py-2 bg-indigo-100 rounded cursor-pointer font-semibold text-indigo-700"
-              aria-expanded={openSection === "myChats"}
-            >
-              My Chats (Tenants)
-              <span className="ml-2 transform transition-transform duration-300">
-                {openSection === "myChats" ? "▾" : "▸"}
-              </span>
-            </button>
+        {/* Tabs */}
+        <div className="flex justify-around border-b">
+          <button
+            className={`w-full py-2 font-semibold ${
+              selectedTab === "myChats"
+                ? "border-b-2 border-indigo-500 text-indigo-600"
+                : "text-gray-500"
+            }`}
+            onClick={() => setSelectedTab("myChats")}
+          >
+            My Chats
+          </button>
+          <button
+            className={`w-full py-2 font-semibold ${
+              selectedTab === "ownerChats"
+                ? "border-b-2 border-green-500 text-green-600"
+                : "text-gray-500"
+            }`}
+            onClick={() => setSelectedTab("ownerChats")}
+          >
+            Owner Chats
+          </button>
+        </div>
 
-            {openSection === "myChats" && (
-              <ul className="mt-2 border rounded border-indigo-200">
-                {myChats.length > 0 ? (
-                  renderChatList(myChats)
-                ) : (
-                  <li className="p-4 text-center text-gray-400">
-                    No chats yet
-                  </li>
-                )}
-              </ul>
+        {/* Chat List */}
+        <div className="flex-1 px-4 py-2 overflow-auto">
+          <ul
+            className={`border rounded ${
+              selectedTab === "myChats"
+                ? "border-indigo-200"
+                : "border-green-200"
+            }`}
+          >
+            {selectedTab === "myChats" ? (
+              myChats.length > 0 ? (
+                renderChatList(myChats)
+              ) : (
+                <li className="p-4 text-center text-gray-400">No chats yet</li>
+              )
+            ) : ownerChats.length > 0 ? (
+              renderChatList(ownerChats)
+            ) : (
+              <li className="p-4 text-center text-gray-400">No chats yet</li>
             )}
-          </div>
-
-          {/* Owner Chats Accordion */}
-          <div>
-            <button
-              onClick={() =>
-                setOpenSection(
-                  openSection === "ownerChats" ? null : "ownerChats"
-                )
-              }
-              className="w-full flex justify-between items-center px-4 py-2 bg-green-100 rounded cursor-pointer font-semibold text-green-700"
-              aria-expanded={openSection === "ownerChats"}
-            >
-              Owner Chats
-              <span className="ml-2 transform transition-transform duration-300">
-                {openSection === "ownerChats" ? "▾" : "▸"}
-              </span>
-            </button>
-
-            {openSection === "ownerChats" && (
-              <ul className="mt-2 border rounded border-green-200">
-                {ownerChats.length > 0 ? (
-                  renderChatList(ownerChats)
-                ) : (
-                  <li className="p-4 text-center text-gray-400">
-                    No chats yet
-                  </li>
-                )}
-              </ul>
-            )}
-          </div>
+          </ul>
         </div>
       </aside>
 
