@@ -192,7 +192,10 @@ export function Room() {
       const data = await res.json();
       // console.log("Chat room data:", data);
       if (data._id) {
-        navigate({ to: `/chat/${data._id}` });
+        navigate({
+          to: "/chatwithsidebar",
+          search: { chatRoomId: data._id },
+        });
       } else {
         alert("Failed to open chat room");
       }
