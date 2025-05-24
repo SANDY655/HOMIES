@@ -8,12 +8,8 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import DemoTable from "./routes/demo.table";
-import DemoTanstackQuery from "./routes/demo.tanstack-query";
 
-import Header from "./components/Header";
-
-import TanstackQueryLayout from "./integrations/tanstack-query/layout";
+import "leaflet/dist/leaflet.css";
 
 import * as TanstackQuery from "./integrations/tanstack-query/root-provider";
 
@@ -24,13 +20,13 @@ import App from "./App.tsx";
 
 import DashboardRoute from "./pages/Dashboard.tsx";
 import PostRoomRoute from "./pages/PostRoom.tsx";
-import FindingRoommatesRoute from "./pages/FindRoomates.tsx";
 import SearchRoomRoute from "./pages/SearchRoom.tsx";
 import RoomRoute from "./pages/Room.tsx";
 import MyRoomsRoute from "./pages/MyRooms.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import ChatRoute from "./pages/Chat.tsx";
-import EditRoomRoute  from "./pages/EditRoom.tsx";
+import EditRoomRoute from "./pages/EditRoom.tsx";
+import ChatRoomRoute from "./pages/ChatRoom.tsx";
+import  ChatWithSidebarRoute  from "./pages/ChatWithSIdeBar.tsx";
 const queryClient = new QueryClient();
 const rootRoute = createRootRoute({
   component: () => (
@@ -53,17 +49,14 @@ const indexRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
-
   DashboardRoute(rootRoute),
   PostRoomRoute(rootRoute),
   SearchRoomRoute(rootRoute),
-  FindingRoommatesRoute(rootRoute),
   MyRoomsRoute(rootRoute),
-  DemoTable(rootRoute),
-  DemoTanstackQuery(rootRoute),
   RoomRoute(rootRoute),
-  ChatRoute(rootRoute),
   EditRoomRoute(rootRoute),
+  ChatRoomRoute(rootRoute),
+  ChatWithSidebarRoute(rootRoute),
 ]);
 
 const router = createRouter({
