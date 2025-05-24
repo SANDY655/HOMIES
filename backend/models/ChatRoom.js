@@ -1,10 +1,13 @@
+// models/ChatRoom.js
 const mongoose = require("mongoose");
-const chatSchema = new mongoose.Schema(
+
+const chatRoomSchema = new mongoose.Schema(
   {
-    members: [
+    participants: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "User", // Refers to the User model
+        required: true,
       },
     ],
     roomId: {
@@ -18,8 +21,10 @@ const chatSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true,
+    timestamps: true, // Automatically adds createdAt and updatedAt
   }
 );
-const ChatModel = mongoose.model("Chat", chatSchema);
-module.exports = { ChatModel };
+
+const ChatRoom = mongoose.model("ChatRoom", chatRoomSchema);
+
+module.exports = ChatRoom;

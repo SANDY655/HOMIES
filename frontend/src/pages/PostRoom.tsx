@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Stepper,
   Step,
@@ -19,9 +19,12 @@ import { CheckCircleOutline } from "@mui/icons-material";
 import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion"; // Import framer-motion
 import axios from "axios";
+import { Autocomplete } from "@mui/material";
+import debounce from "lodash/debounce";
 
 // Define the steps
 const steps = ["Room Details", "Photos", "Amenities", "Review & Confirm"];
+const LOCATIONIQ_API_KEY = "pk.156347b797adf47f459dbb3d2c9ffabd"; // put your key here
 
 // Define Zod schemas for validation
 const stepSchemas = [
@@ -71,6 +74,7 @@ const defaultForm = {
 };
 
 export function PostRoom() {
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState({});
@@ -78,6 +82,11 @@ export function PostRoom() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (name === "location") {
+      fetchLocationSuggestions(value);
+    }
+
     if (name.includes("amenities.")) {
       const key = name.split(".")[1];
       setForm((prev) => ({
@@ -168,6 +177,35 @@ export function PostRoom() {
     setForm(defaultForm);
     setErrors({});
   };
+  const fetchLocationSuggestions = async (query) => {
+    if (!query) {
+      setLocationSuggestions([]);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://us1.locationiq.com/v1/autocomplete.php?key=${LOCATIONIQ_API_KEY}&q=${encodeURIComponent(
+          query
+        )}&limit=5&format=json`
+      );
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      setLocationSuggestions(data);
+    } catch (error) {
+      console.error("Error fetching location suggestions:", error);
+      setLocationSuggestions([]);
+    }
+  };
+  const debouncedFetchLocationSuggestions = useCallback(
+    debounce((query) => {
+      fetchLocationSuggestions(query);
+    }, 500),
+    [] // empty dependencies = create once on mount
+  );
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -242,18 +280,45 @@ export function PostRoom() {
                 size="small"
                 sx={{ marginBottom: 2 }}
               />
-              <TextField
-                label="Location"
-                name="location"
-                fullWidth
-                value={form.location}
-                onChange={handleChange}
-                error={!!errors.location}
-                helperText={errors.location}
-                variant="outlined"
-                size="small"
-                sx={{ marginBottom: 2 }}
+              <Autocomplete
+                freeSolo
+                options={locationSuggestions}
+                getOptionLabel={(option) =>
+                  typeof option === "string" ? option : option.display_name
+                }
+                filterOptions={(x) => x} // disable built-in filtering, since API already filters
+                inputValue={form.location}
+                onInputChange={(event, newInputValue, reason) => {
+                  if (reason === "input") {
+                    setForm((prev) => ({
+                      ...prev,
+                      location: newInputValue,
+                    }));
+                    debouncedFetchLocationSuggestions(newInputValue);
+                  }
+                }}
+                onChange={(event, newValue) => {
+                  if (newValue && typeof newValue !== "string") {
+                    setForm((prev) => ({
+                      ...prev,
+                      location: newValue.display_name,
+                    }));
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Location"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    error={!!errors.location}
+                    helperText={errors.location}
+                    sx={{ marginBottom: 2 }}
+                  />
+                )}
               />
+
               <TextField
                 label="Rent (₹)"
                 name="rent"
