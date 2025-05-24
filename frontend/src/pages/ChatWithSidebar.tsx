@@ -1,4 +1,9 @@
-import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
+import {
+  createRoute,
+  redirect,
+  useNavigate,
+  type RootRoute,
+} from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
@@ -6,6 +11,8 @@ import { ChatRoomPane } from "./ChatRoomPane";
 
 export function ChatWithSidebar() {
   const currentUserId = getCurrentUserIdFromToken();
+  const navigate = useNavigate(); // <-- initialize navigate
+
   const [activeChatRoomId, setActiveChatRoomId] = useState<string | null>(null);
   const [chatRooms, setChatRooms] = useState<any[]>([]);
   const [selectedTab, setSelectedTab] = useState<"myChats" | "ownerChats">(
@@ -67,9 +74,31 @@ export function ChatWithSidebar() {
     <div className="flex h-screen bg-gray-50 overflow-auto">
       {/* Sidebar */}
       <aside className="w-80 border-r border-gray-300 bg-white flex flex-col">
-        <h2 className="p-4 font-bold text-lg border-b border-gray-300">
-          Chats
-        </h2>
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-300">
+          <button
+            onClick={() => navigate({ to: "/dashboard" })}
+            title="Back to Dashboard"
+            aria-label="Back to Dashboard"
+            className="p-1 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <h2 className="font-bold text-lg select-none">Chats</h2>
+        </div>
 
         {/* Tabs */}
         <div className="flex justify-around border-b">
