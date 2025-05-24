@@ -1,17 +1,10 @@
-// routes/chat/ChatRoom.tsx
+// ChatRoomPane.tsx
 import socket from "@/lib/socket";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
-import {
-  createRoute,
-  redirect,
-  RootRoute,
-  useParams,
-} from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
-export function ChatRoom() {
-  const { chatRoomId } = useParams({ from: "/chat/$chatRoomId" });
+export function ChatRoomPane({ chatRoomId }: { chatRoomId: string }) {
   const currentUserId = getCurrentUserIdFromToken();
 
   const [messages, setMessages] = useState<
@@ -28,9 +21,8 @@ export function ChatRoom() {
           `http://localhost:5000/api/chatroom/getChatRoom/${chatRoomId}`
         );
         const chatRoom = res.data;
-        console.log(chatRoom)
-        setRoomTitle(chatRoom.roomId?.title);
-        console.log(res)
+
+        setRoomTitle(chatRoom.roomId.title);
       } catch (error) {
         console.error("Failed to fetch chat room info:", error);
       }
@@ -179,15 +171,3 @@ export function ChatRoom() {
     </div>
   );
 }
-
-export default (parentRoute: RootRoute) =>
-  createRoute({
-    path: "/chat/$chatRoomId",
-    component: ChatRoom,
-    getParentRoute: () => parentRoute,
-    beforeLoad: ({ context, location }) => {
-      if (!context.auth.isAuthenticated()) {
-        throw redirect({ to: "/", search: { redirect: location.href } });
-      }
-    },
-  });

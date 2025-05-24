@@ -30,26 +30,45 @@ const createOrGetChatRoom = async (req, res) => {
   }
 };
 
-const getChatRoomDetails = async (req, res) => {
+const getUserChatRooms = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const chatRooms = await ChatRoom.find({
+      participants: userId,
+    })
+      .populate('participants', 'email avatar') // populate participants info you want
+      .populate('latestMessage') // optional, if you want to show latest message preview
+      .sort({ updatedAt: -1 });
+    res.status(200).json(chatRooms);
+  } catch (error) {
+    console.error("Failed to get user's chat rooms:", error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+async function getChatRoomById(req, res) {
   const { chatRoomId } = req.params;
 
   try {
-    const chatRoom = await ChatRoom.findById(chatRoomId)
-      .populate("participants", "email") // get participant emails
-      .populate("roomId", "title"); // get room title & location
+    // Find chat room by _id and populate the 'roomId' field (the Room)
+    const chatRoom = await ChatRoom.findById(chatRoomId).populate({
+      path: "roomId",
+      select: "title", // only fetch the title field of the room
+    });
 
     if (!chatRoom) {
-      return res.status(404).json({ message: "ChatRoom not found" });
+      return res.status(404).json({ message: "Chat room not found" });
     }
 
-    res.status(200).json(chatRoom);
+    res.json(chatRoom);
   } catch (error) {
     console.error("Error fetching chat room:", error);
     res.status(500).json({ message: "Server error" });
   }
-};
+}
 
 module.exports = {
   createOrGetChatRoom,
-  getChatRoomDetails,
+  getUserChatRooms,
+  getChatRoomById,
 };

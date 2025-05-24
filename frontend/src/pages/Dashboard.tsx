@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Home, DoorOpen, Settings, LogOut } from "lucide-react";
@@ -99,6 +100,16 @@ export function Dashboard() {
       <header className="bg-white shadow-sm px-6 py-3 flex items-center justify-between sticky top-0 z-40">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
         <div className="flex items-center gap-4">
+            <Button
+      variant="ghost"
+      className="gap-2 text-sm text-gray-700"
+      onClick={() => navigate({ to: "/chatwithsidebar" })}
+      aria-label="Open Chat"
+      title="Open Chat"
+    >
+      <MessageSquare size={18} />
+      Chat
+    </Button>
           <Avatar
             src={email?.avatar || "/img2.png"}
             alt="User Avatar"
