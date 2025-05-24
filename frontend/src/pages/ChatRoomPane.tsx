@@ -6,7 +6,6 @@ import axios from "axios";
 
 export function ChatRoomPane({ chatRoomId }: { chatRoomId: string }) {
   const currentUserId = getCurrentUserIdFromToken();
-
   const [messages, setMessages] = useState<
     { text: string; senderId: string; senderEmail: string; timestamp: string }[]
   >([]);
