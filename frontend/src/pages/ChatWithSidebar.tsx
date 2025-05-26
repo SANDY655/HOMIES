@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
 import { ChatRoomPane } from "./ChatRoomPane";
+import { ArrowLeftIcon } from "lucide-react";
 
 interface Participant {
   _id: string;
@@ -193,12 +194,11 @@ export function ChatWithSidebar() {
       <aside className="w-80 border-r border-gray-300 bg-white flex flex-col">
         {" "}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-300">
-          {" "}
           <button
             onClick={() => navigate({ to: "/dashboard", search: {} })}
             className="p-1 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-            {/* SVG for back button */}{" "}
+            <ArrowLeftIcon />
           </button>
           <h2 className="font-bold text-lg select-none">Chats</h2>{" "}
         </div>{" "}
