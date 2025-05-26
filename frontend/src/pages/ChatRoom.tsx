@@ -28,9 +28,9 @@ export function ChatRoom() {
           `http://localhost:5000/api/chatroom/getChatRoom/${chatRoomId}`
         );
         const chatRoom = res.data;
-        console.log(chatRoom)
+        console.log(chatRoom);
         setRoomTitle(chatRoom.roomId?.title);
-        console.log(res)
+        console.log(res);
       } catch (error) {
         console.error("Failed to fetch chat room info:", error);
       }
