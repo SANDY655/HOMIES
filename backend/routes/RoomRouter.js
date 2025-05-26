@@ -13,6 +13,6 @@ roomRouter.post("/postroom", postroom);
 roomRouter.get("/searchroom", searchroom);
 roomRouter.get("/:id", getroom);
 roomRouter.get("/user/:id", getRoomsByUser);
-roomRouter.put('/:roomId', updateRoom);
-roomRouter.delete('/:roomId', deleteRoom);
+roomRouter.put("/:roomId", updateRoom);
+roomRouter.delete("/:roomId", deleteRoom);
 module.exports = { roomRouter };
