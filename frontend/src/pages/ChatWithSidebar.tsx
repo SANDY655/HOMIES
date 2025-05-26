@@ -173,43 +173,37 @@ export function ChatWithSidebar() {
             room._id === chatRoomId ? "bg-indigo-300 font-semibold" : ""
           }`}
         >
-                    <div className="text-sm truncate">{displayName}</div>       
-           {" "}
+          <div className="text-sm truncate">{displayName}</div>{" "}
           <div className="text-xs text-gray-700 truncate">
             {room.latestMessage?.content || "No messages yet"}
-          </div>
-                   {" "}
+          </div>{" "}
           {room.latestMessage && (
             <div className="text-xs text-gray-500 text-right">
-                           {" "}
-              {new Date(room.latestMessage.timestamp).toLocaleTimeString()}     
-                   {" "}
+              {" "}
+              {new Date(room.latestMessage.timestamp).toLocaleTimeString()}{" "}
             </div>
-          )}
-                 {" "}
+          )}{" "}
         </li>
       );
     });
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-           {" "}
+      {" "}
       <aside className="w-80 border-r border-gray-300 bg-white flex flex-col">
-               {" "}
+        {" "}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-300">
-                   {" "}
+          {" "}
           <button
             onClick={() => navigate({ to: "/dashboard", search: {} })}
             className="p-1 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-                        {/* SVG for back button */}         {" "}
+            {/* SVG for back button */}{" "}
           </button>
-                    <h2 className="font-bold text-lg select-none">Chats</h2>   
-             {" "}
-        </div>
-               {" "}
+          <h2 className="font-bold text-lg select-none">Chats</h2>{" "}
+        </div>{" "}
         <div className="flex justify-around border-b">
-                   {" "}
+          {" "}
           <button
             className={`w-full py-2 font-semibold ${
               selectedTab === "myChats"
@@ -218,9 +212,8 @@ export function ChatWithSidebar() {
             }`}
             onClick={() => setSelectedTab("myChats")}
           >
-                        My Chats          {" "}
-          </button>
-                   {" "}
+            My Chats{" "}
+          </button>{" "}
           <button
             className={`w-full py-2 font-semibold ${
               selectedTab === "ownerChats"
@@ -229,15 +222,13 @@ export function ChatWithSidebar() {
             }`}
             onClick={() => setSelectedTab("ownerChats")}
           >
-                        Owner Chats          {" "}
-          </button>
-                 {" "}
-        </div>
-               {" "}
+            Owner Chats{" "}
+          </button>{" "}
+        </div>{" "}
         <div className="flex-1 overflow-y-auto">
-                   {" "}
+          {" "}
           <ul>
-                       {" "}
+            {" "}
             {!selectedTab ? (
               <li className="p-4 text-center text-gray-400">
                 Select a tab to view chats
@@ -252,30 +243,23 @@ export function ChatWithSidebar() {
               renderChatList(ownerChats)
             ) : (
               <li className="p-4 text-center text-gray-400">No chats yet</li>
-            )}
-                     {" "}
-          </ul>
-                 {" "}
-        </div>
-             {" "}
-      </aside>
-           {" "}
+            )}{" "}
+          </ul>{" "}
+        </div>{" "}
+      </aside>{" "}
       <main className="flex-1 flex flex-col bg-white">
-               {" "}
+        {" "}
         {!chatRoomId ? (
           <div className="flex items-center justify-center flex-grow text-gray-500">
-                        Start a chat by selecting a chat room from the sidebar  
-                   {" "}
+            Start a chat by selecting a chat room from the sidebar{" "}
           </div>
         ) : (
           <ChatRoomPane
             chatRoomId={chatRoomId}
             onMessageSent={handleReceiveMessage}
           />
-        )}
-             {" "}
-      </main>
-         {" "}
+        )}{" "}
+      </main>{" "}
     </div>
   );
 }
