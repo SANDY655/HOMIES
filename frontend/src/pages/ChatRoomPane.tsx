@@ -29,7 +29,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
     const fetchMessages = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/message/${chatRoomId}`
+          ` http://localhost:5000/api/message/${chatRoomId}`
         );
         const formattedMessages = res.data.map((msg) => ({
           text: msg.content,

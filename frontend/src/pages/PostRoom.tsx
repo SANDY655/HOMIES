@@ -15,8 +15,13 @@ import {
   Stack,
 } from "@mui/material";
 import { z } from "zod";
-import { CheckCircleOutline } from "@mui/icons-material";
-import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
+import { ArrowBack, CheckCircleOutline } from "@mui/icons-material";
+import {
+  createRoute,
+  redirect,
+  useNavigate,
+  type RootRoute,
+} from "@tanstack/react-router";
 import { motion } from "framer-motion"; // Import framer-motion
 import axios from "axios";
 import { Autocomplete } from "@mui/material";
@@ -74,6 +79,8 @@ const defaultForm = {
 };
 
 export function PostRoom() {
+  const navigate = useNavigate(); // get navigate function
+
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(defaultForm);
@@ -559,6 +566,15 @@ export function PostRoom() {
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={() => navigate({ to: "/dashboard" })}
+        sx={{ mb: 3 }}
+        variant="outlined"
+        className="h-min top-5 left-0  p-2 wrap-break-word"
+      >
+        Back to Dashboard
+      </Button>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

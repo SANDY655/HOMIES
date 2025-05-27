@@ -36,6 +36,7 @@ interface Room {
     washingMachine: boolean;
   };
   email: string;
+  userId: string; // Assuming userId is available on the room object
 }
 
 export function Room() {
@@ -173,24 +174,27 @@ export function Room() {
     key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 
   const handleContactOwner = async () => {
+    if (!currentUserId) {
+      // If user is not logged in, redirect to home and open login modal
+      navigate({ to: "/", search: { modal: "login",search: { modal: "login" }  } });
+      return;
+    }
+
     try {
-      // console.log("Other user Id", room.userId);
-      // console.log("Room Id", room._id);
       const res = await fetch(
         "http://localhost:5000/api/chatroom/createOrGet",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userId1: currentUserId, // Get current user ID from auth context or state
-            userId2: room.userId, // Or room owner's user ID if you have it
+            userId1: currentUserId,
+            userId2: room.userId, // Use room owner's user ID
             roomId: room._id,
           }),
         }
       );
 
       const data = await res.json();
-      // console.log("Chat room data:", data);
       if (data._id) {
         navigate({
           to: "/chatwithsidebar",
@@ -301,7 +305,10 @@ export function Room() {
                 Location Map
               </h2>
               {loadingCoords && <p>Loading map...</p>}
-              {!loadingCoords && coordinates ? (
+              {!loadingCoords &&
+              coordinates &&
+              typeof coordinates.lat === "number" &&
+              typeof coordinates.lon === "number" ? (
                 <MapContainer
                   center={[coordinates.lat, coordinates.lon]}
                   zoom={13}
@@ -338,7 +345,8 @@ export function Room() {
                   )}
                 </MapContainer>
               ) : (
-                !loadingCoords && <p>Location not found on map.</p>
+                !loadingCoords &&
+                !coordinates && <p>Location not found on map.</p>
               )}
             </div>
 
@@ -361,9 +369,4 @@ export default (parentRoute: RootRoute) =>
     path: "/rooms/$roomId",
     component: Room,
     getParentRoute: () => parentRoute,
-    beforeLoad: ({ context, location }) => {
-      if (!context.auth.isAuthenticated()) {
-        throw redirect({ to: "/", search: { redirect: location.href } });
-      }
-    },
   });

@@ -153,6 +153,16 @@ export function SearchRoom() {
   return (
     <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-4 mb-6 flex justify-start">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold px-4 py-2 border border-blue-600 rounded-lg hover:bg-blue-50 transition"
+            aria-label="Go to Dashboard"
+          >
+            <Home size={20} />
+            Dashboard
+          </Link>
+        </div>
         <div className="bg-white rounded-2xl shadow p-4 lg:sticky top-6 h-fit">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">Filters</h2>
 
