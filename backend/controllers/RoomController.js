@@ -249,15 +249,71 @@ async function getRoomsByUser(req, res) {
       .json({ message: error.message, success: false, error: true });
   }
 }
-
 const getAllRooms = async (req, res) => {
   try {
-    const rooms = await RoomModel.find().sort({ createdAt: -1 });
-    res.status(200).json(rooms);
+    console.log("Received Query Parameters:", req.query);
+
+    const {
+      searchQuery = "",
+      priceFilter,
+      roomTypeFilter,
+      availableFrom,
+      amenities,
+    } = req.query;
+
+    const filter = {};
+
+    // Search by title or location
+    if (searchQuery) {
+      filter.$or = [
+        { title: { $regex: searchQuery, $options: "i" } },
+        { location: { $regex: searchQuery, $options: "i" } },
+      ];
+    }
+
+    // Price filter
+    if (priceFilter && priceFilter !== "all") {
+      filter.rent = { $lte: parseInt(priceFilter, 10) };
+    }
+
+    // Room type filter
+    if (roomTypeFilter && roomTypeFilter !== "all") {
+      filter.roomType = roomTypeFilter;
+    }
+
+    // Availability date filter
+    if (availableFrom) {
+      const date = new Date(availableFrom);
+      if (!isNaN(date.getTime())) {
+        filter.availableFrom = { $gte: date };
+      }
+    }
+
+    // Amenities filter
+    if (amenities) {
+      const amenityList = Array.isArray(amenities) ? amenities : [amenities];
+      for (const amenity of amenityList) {
+        filter[`amenities.${amenity}`] = true;
+      }
+    }
+
+    // Fetch and sort rooms
+    const rooms = await RoomModel.find(filter).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      data: rooms,
+      success: true,
+      error: false,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch rooms', error: error.message });
+    console.error("Error fetching rooms:", error);
+    res.status(500).json({
+      message: "Failed to fetch rooms",
+      error: error.message,
+      success: false,
+    });
   }
-}
+};
 
 module.exports = {
   postroom,
