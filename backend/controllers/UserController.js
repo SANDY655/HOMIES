@@ -77,7 +77,6 @@ async function login(req, res) {
         success: false,
       });
     }
-
     // Generate JWT token with a shorter expiry if needed, and add issuedAt and jwtid for better tracking
     const token = jwt.sign(
       { id: user._id, email: user.email },
