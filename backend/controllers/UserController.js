@@ -78,13 +78,13 @@ async function login(req, res) {
       });
     }
 
-    if (user.isLoggedIn) {
-      return res.status(400).json({
-        message: "User already logged in",
-        error: true,
-        success: false,
-      });
-    }
+    // if (user.isLoggedIn) {
+    //   return res.status(400).json({
+    //     // message: "User already logged in",
+    //     error: true,
+    //     success: false,
+    //   });
+    // }
 
     // Generate JWT token with a shorter expiry if needed, and add issuedAt and jwtid for better tracking
     const token = jwt.sign(
