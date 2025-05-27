@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 export function EditRoom() {
   const { roomId } = useParams({ strict: false }) as { roomId: string };
@@ -36,11 +37,10 @@ export function EditRoom() {
       const data = await res.json();
       if (!data.success)
         throw new Error(data.message || "Failed to fetch room");
-      return data.data; // ✅ correct access
+      return data.data;
     },
   });
 
-  // ⬇️ Set form data once room is fetched
   useEffect(() => {
     if (room) {
       setFormData({
@@ -56,25 +56,21 @@ export function EditRoom() {
     }
   }, [room]);
 
-  function getPublicIdFromUrl(url) {
-    // Cloudinary URL example:
-    // https://res.cloudinary.com/demo/image/upload/v1620000000/folder_name/image_name.jpg
-    // We want 'folder_name/image_name' part without extension
-    // Simplified version:
+  function getPublicIdFromUrl(url: string) {
     const parts = url.split("/");
-    const fileWithExt = parts[parts.length - 1]; // e.g. image_name.jpg
-    const folder = parts[parts.length - 2]; // e.g. folder_name
-    const publicId = `${folder}/${fileWithExt.split(".")[0]}`;
-    return publicId;
+    const fileWithExt = parts[parts.length - 1];
+    const folder = parts[parts.length - 2];
+    return `${folder}/${fileWithExt.split(".")[0]}`;
   }
-  async function handleImageUpload(files) {
+
+  async function handleImageUpload(files: File[]) {
     try {
       const res = await fetch("http://localhost:5000/api/cloud/get-signature", {
         method: "POST",
       });
       const { signature, timestamp, cloudName, apiKey } = await res.json();
 
-      const uploadedUrls = [];
+      const uploadedUrls: string[] = [];
 
       for (const file of files) {
         const formData = new FormData();
@@ -96,7 +92,6 @@ export function EditRoom() {
         uploadedUrls.push(uploadData.secure_url);
       }
 
-      // Add the new uploaded image URLs to formData.images
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, ...uploadedUrls],
@@ -107,7 +102,7 @@ export function EditRoom() {
     }
   }
 
-  async function handleDeleteImage(imgUrl) {
+  async function handleDeleteImage(imgUrl: string) {
     try {
       const publicId = getPublicIdFromUrl(imgUrl);
       const res = await fetch("http://localhost:5000/api/cloud/image", {
@@ -119,12 +114,11 @@ export function EditRoom() {
       if (!data.success)
         throw new Error(data.message || "Failed to delete image");
 
-      // Remove image from formData.images
       setFormData((prev) => ({
         ...prev,
         images: prev.images.filter((img) => img !== imgUrl),
       }));
-    } catch (error) {
+    } catch (error: any) {
       alert("Error deleting image: " + error.message);
     }
   }
@@ -146,12 +140,12 @@ export function EditRoom() {
     },
   });
 
-  function handleChange(e) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleAmenityChange(e) {
+  function handleAmenityChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -162,6 +156,15 @@ export function EditRoom() {
   return (
     <div className="min-h-screen py-10 px-6 md:px-12 lg:px-24 bg-gray-50">
       <div className="max-w-3xl mx-auto">
+        {/* 🔙 Back Navigation */}
+        <button
+          onClick={() => navigate({ to: "/my-rooms" })}
+          className="mb-6 flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to My Rooms
+        </button>
+
         <h1 className="text-3xl font-bold mb-6">Edit Room</h1>
 
         {isLoading ? (
@@ -211,6 +214,7 @@ export function EditRoom() {
                   ))}
                 </div>
               </div>
+
               {/* Upload new images */}
               <div className="mt-4">
                 <Label className="block mb-2">Upload New Images</Label>
@@ -221,6 +225,7 @@ export function EditRoom() {
                   onChange={(e) => handleImageUpload([...e.target.files])}
                 />
               </div>
+
               {/* Preview images */}
               {formData.images?.length > 0 && (
                 <div>
@@ -233,7 +238,6 @@ export function EditRoom() {
                           alt={`Room image ${idx + 1}`}
                           className="h-24 w-full object-cover rounded"
                         />
-                        {/* Delete button overlay */}
                         <button
                           onClick={() => handleDeleteImage(img)}
                           title="Delete image"

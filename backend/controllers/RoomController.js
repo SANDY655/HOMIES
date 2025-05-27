@@ -250,6 +250,15 @@ async function getRoomsByUser(req, res) {
   }
 }
 
+const getAllRooms = async (req, res) => {
+  try {
+    const rooms = await RoomModel.find().sort({ createdAt: -1 });
+    res.status(200).json(rooms);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch rooms', error: error.message });
+  }
+}
+
 module.exports = {
   postroom,
   searchroom,
@@ -257,4 +266,5 @@ module.exports = {
   getRoomsByUser,
   updateRoom,
   deleteRoom,
+  getAllRooms,
 };

@@ -43,8 +43,3 @@ module.exports = {
   saveMessage,
   getMessagesByChatRoom,
 };
-
-module.exports = {
-  saveMessage,
-  getMessagesByChatRoom,
-};

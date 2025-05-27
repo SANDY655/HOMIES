@@ -16,6 +16,26 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "@tanstack/react-router";
 
+function DashboardIcon() {
+  // Simple home/dashboard SVG icon
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5 inline-block mr-2"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6m-9 6h3m-6 0h.01M4 12v7a1 1 0 001 1h3m10-8v8a1 1 0 01-1 1h-3m-4 0h4"
+      />
+    </svg>
+  );
+}
+
 export function MyRooms() {
   const userId = localStorage.getItem("userId");
   const navigate = useNavigate();
@@ -57,9 +77,23 @@ export function MyRooms() {
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-6 md:px-12 lg:px-24">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-gray-800 mb-10">
-          My Posted Rooms
-        </h1>
+        {/* Header with title and dashboard navigation button */}
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-4xl font-extrabold text-gray-800">
+            My Posted Rooms
+          </h1>
+
+          {/* Dashboard Navigation Button */}
+          <Button
+            variant="outline"
+            className="flex items-center space-x-1"
+            onClick={() => navigate({ to: "/dashboard" })}
+            aria-label="Go to Dashboard"
+          >
+            <DashboardIcon />
+            <span>Dashboard</span>
+          </Button>
+        </div>
 
         {isLoading ? (
           <p className="text-gray-500 text-center">Loading your rooms...</p>
@@ -90,10 +124,12 @@ export function MyRooms() {
                       <strong>Location:</strong> {room.location}
                     </p>
                     <p className="text-gray-600 mb-1">
-                      <strong>Rent:</strong> ₹{room.rent?.toLocaleString("en-IN")}
+                      <strong>Rent:</strong> ₹
+                      {room.rent?.toLocaleString("en-IN")}
                     </p>
                     <p className="text-gray-600 mb-1">
-                      <strong>Deposit:</strong> ₹{room.deposit?.toLocaleString("en-IN")}
+                      <strong>Deposit:</strong> ₹
+                      {room.deposit?.toLocaleString("en-IN")}
                     </p>
                     <p className="text-gray-600 mb-1">
                       <strong>Available From:</strong>{" "}
@@ -134,7 +170,9 @@ export function MyRooms() {
                     <div className="flex gap-3 mt-6">
                       <Button
                         variant="outline"
-                        onClick={() => navigate({ to: `/edit-room/${room._id}` })}
+                        onClick={() =>
+                          navigate({ to: `/edit-room/${room._id}` })
+                        }
                       >
                         Edit
                       </Button>
@@ -158,7 +196,9 @@ export function MyRooms() {
                               onClick={() => deleteMutation.mutate(room._id)}
                               disabled={deleteMutation.isLoading}
                             >
-                              {deleteMutation.isLoading ? "Deleting..." : "Confirm Delete"}
+                              {deleteMutation.isLoading
+                                ? "Deleting..."
+                                : "Confirm Delete"}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
