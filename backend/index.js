@@ -5,13 +5,12 @@ const { connectDB } = require("./connectDB");
 const { userRouter } = require("./routes/UserRouter");
 const { roomRouter } = require("./routes/RoomRouter");
 const { router } = require("./routes/cloudinaryRouter");
-const messageRouter = require("./routes/MessageRoutes"); // ✅ import
+const messageRouter = require("./routes/MessageRoutes");
 const chatRoomRouter = require("./routes/ChatRoomRoutes");
 const { UserModel } = require("./models/UserModel");
 
 const app = express();
 const server = http.createServer(app);
-
 const io = require("socket.io")(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -20,14 +19,9 @@ const io = require("socket.io")(server, {
   },
 });
 
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
-);
-
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
+
 // API Routes
 app.use("/api/user", userRouter);
 app.use("/api/room", roomRouter);
@@ -40,7 +34,7 @@ io.on("connection", (socket) => {
 
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
-    console.log(`✅ User joined room: ${roomId}`);
+    console.log(` User joined room: ${roomId}`);
   });
 
   socket.on("sendMessage", async ({ roomId, message, sender }) => {
@@ -52,8 +46,11 @@ io.on("connection", (socket) => {
       sender,
       senderEmail,
       timestamp: new Date().toISOString(),
-    };
+      chatRoomId: roomId,
+    }; // Emit to all clients in the room, including the sender
+
     socket.to(roomId).emit("receiveMessage", msg);
+    io.to(roomId).emit("updateMessage", msg);
   });
 
   socket.on("leaveRoom", (roomId) => {
