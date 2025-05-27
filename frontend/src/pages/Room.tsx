@@ -176,7 +176,10 @@ export function Room() {
   const handleContactOwner = async () => {
     if (!currentUserId) {
       // If user is not logged in, redirect to home and open login modal
-      navigate({ to: "/", search: { modal: "login",search: { modal: "login" }  } });
+      navigate({
+        to: "/",
+        search: { modal: "login", search: { modal: "login" } },
+      });
       return;
     }
 
