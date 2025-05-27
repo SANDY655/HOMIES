@@ -6,8 +6,8 @@ const blacklist = require("../utils/tokenBlacklist");
 dotenv.config();
 async function register(req, res) {
   try {
-    const { email, password, confirmPassword } = req.body;
-    if (!email || !password || !confirmPassword) {
+    const { name, email, password, confirmPassword } = req.body;
+    if (!name || !email || !password || !confirmPassword) {
       return res.status(400).json({
         message: "Please fill the required fields",
         error: true,
@@ -29,7 +29,7 @@ async function register(req, res) {
         success: false,
       });
     }
-    const newUser = new UserModel({ email, password });
+    const newUser = new UserModel({ name, email, password });
     const savedUser = await newUser.save();
     return res.json({
       message: "User registered successfully",

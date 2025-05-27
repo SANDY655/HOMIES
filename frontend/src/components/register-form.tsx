@@ -16,6 +16,8 @@ import { createRoute, RootRoute } from "@tanstack/react-router";
 // Zod schema
 const registerSchema = z
   .object({
+    name: z.string().min(2, "Name must be atleast 2 characters")
+  .regex(/^[a-zA-Z][a-zA-Z0-9]*$/, "Name must start with a letter and be alphanumeric"),
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z
@@ -51,13 +53,13 @@ export function RegisterForm({
       const response = await axios.post(
         "http://localhost:5000/api/user/register",
         {
+          name: data.name,
           email: data.email,
           password: data.password,
           confirmPassword: data.confirmPassword,
         },
         { withCredentials: true }
       );
-
       setMessage("Registration successful!");
       console.log("Success:", response.data);
     } catch (error: any) {
@@ -93,6 +95,18 @@ export function RegisterForm({
                 <p className="text-muted-foreground">
                   Register your HOMIES account
                 </p>
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
+                  {...register("name")}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
+                )}
               </div>
 
               {/* Email */}
