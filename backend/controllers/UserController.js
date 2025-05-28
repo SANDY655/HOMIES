@@ -3,7 +3,98 @@ const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const blacklist = require("../utils/tokenBlacklist");
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
+const {  OtpSchemaModel } = require("../models/OtpSchema");
+
 dotenv.config();
+const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "santhoshkannan525@gmail.com",
+    pass: "cwsk vnmz djcw rakg",
+  },
+});
+
+ const sendOtp = async (req, res) => {
+  const { email, name, password,confirmPassword } = req.body;
+
+  if (!email || !password || !name)
+    return res.status(400).json({ message: "All fields are required" });
+
+  if (password !== confirmPassword) {
+      return res.json({
+        message: "Passwords do not match",
+        error: true,
+        success: false,
+      });
+    }
+
+  try {
+    // Check for existing email or name
+    const emailExists = await UserModel.findOne({ email });
+    const nameExists = await UserModel.findOne({ name });
+
+    if (emailExists)
+      return res.status(409).json({ message: "Email already registered" });
+    if (nameExists)
+      return res.status(409).json({ message: "Username already taken" });
+
+    const otp = generateOtp();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+
+    await OtpSchemaModel.findOneAndUpdate(
+      { email },
+      { email, name, password, otp, expiresAt },
+      { upsert: true, new: true }
+    );
+    console.log("OTP saved to database:", otp);
+    await transporter.sendMail({
+      from: "santhoshkannan525@gmail.com",
+      to: email,
+      subject: "Your OTP for Verification",
+      text: `Your OTP is ${otp}. It expires in 10 minutes.`,
+    });
+
+    return res.status(200).json({ message: "OTP sent to your email" });
+  } catch (err) {
+    console.error("Send OTP error:", err);
+    return res.status(500).json({ message: "Failed to send OTP" });
+  }
+};
+
+const verifyOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp)
+    return res.status(400).json({ message: "Email and OTP are required" });
+
+  try {
+    const otpRecord = await OtpSchemaModel.findOne({ email });
+
+    if (!otpRecord)
+      return res.status(404).json({ message: "OTP not found or expired" });
+
+    if (otpRecord.otp !== otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+
+    // Create and save new user
+    const newUser = new UserModel({
+      name: otpRecord.name,
+      email: otpRecord.email,
+      password: otpRecord.password,
+    });
+
+    await newUser.save();
+    await OtpSchemaModel.deleteOne({ email });
+
+    return res.status(201).json({ message: "Account verified and registered" });
+  } catch (err) {
+    console.error("OTP Verification error:", err);
+    return res.status(500).json({ message: "OTP verification failed" });
+  }
+};
+
 async function register(req, res) {
   try {
     const { name, email, password, confirmPassword } = req.body;
@@ -288,4 +379,6 @@ module.exports = {
   changePassword,
   checkUserName,
   updateUsername,
+sendOtp,
+verifyOtp
 };
