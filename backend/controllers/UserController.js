@@ -4,31 +4,36 @@ const jwt = require("jsonwebtoken");
 const blacklist = require("../utils/tokenBlacklist");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
-const {  OtpSchemaModel } = require("../models/OtpSchema");
+const { OtpSchemaModel } = require("../models/OtpSchema");
 
 dotenv.config();
-const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+const generateOtp = () =>
+  Math.floor(100000 + Math.random() * 900000).toString();
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "santhoshkannan525@gmail.com",
     pass: "cwsk vnmz djcw rakg",
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
- const sendOtp = async (req, res) => {
-  const { email, name, password,confirmPassword } = req.body;
+const sendOtp = async (req, res) => {
+  const { email, name, password, confirmPassword } = req.body;
 
   if (!email || !password || !name)
     return res.status(400).json({ message: "All fields are required" });
 
   if (password !== confirmPassword) {
-      return res.json({
-        message: "Passwords do not match",
-        error: true,
-        success: false,
-      });
-    }
+    return res.json({
+      message: "Passwords do not match",
+      error: true,
+      success: false,
+    });
+  }
 
   try {
     // Check for existing email or name
@@ -379,6 +384,6 @@ module.exports = {
   changePassword,
   checkUserName,
   updateUsername,
-sendOtp,
-verifyOtp
+  sendOtp,
+  verifyOtp,
 };

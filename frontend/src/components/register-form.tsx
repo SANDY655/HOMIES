@@ -1,28 +1,31 @@
-// src/components/RegisterForm.tsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-
-// UI components (adjust import paths as needed)
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createRoute, RootRoute } from "@tanstack/react-router";
+import { createRoute, RootRoute, redirect } from "@tanstack/react-router";
 
 // Zod schema
 const registerSchema = z
   .object({
-    name: z.string().min(2, "Name must be atleast 2 characters")
-  .regex(/^[a-zA-Z][a-zA-Z0-9]*$/, "Name must start with a letter and be alphanumeric"),
+    name: z
+      .string()
+      .min(2, "Name must be atleast 2 characters")
+      .regex(
+        /^[a-zA-Z][a-zA-Z0-9]*$/,
+        "Name must start with a letter and be alphanumeric"
+      ),
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z
       .string()
       .min(6, "Password must be at least 6 characters"),
+    otp: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     path: ["confirmPassword"],
@@ -39,34 +42,63 @@ export function RegisterForm({
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),
   });
 
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const [message, setMessage] = useState("");
 
-  const onSubmit = async (data: RegisterSchema) => {
+  const sendOtp = async () => {
     setLoading(true);
     setMessage("");
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/user/register",
+      const { name, email, password, confirmPassword } = watch();
+      const res = await axios.post(
+        "http://localhost:5000/api/user/send-otp",
         {
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          confirmPassword: data.confirmPassword,
+          name,
+          email,
+          password,
+          confirmPassword,
         },
         { withCredentials: true }
       );
-      setMessage("Registration successful!");
-      console.log("Success:", response.data);
-    } catch (error: any) {
-      if (axios.isAxiosError(error)) {
-        setMessage(error.response?.data?.message || "Registration failed.");
+
+      setOtpSent(true);
+      setMessage(res.data.message || "OTP sent to your email");
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        setMessage(err.response?.data?.message || "Failed to send OTP");
       } else {
-        setMessage("An unexpected error occurred.");
+        setMessage("Unexpected error");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async (data: RegisterSchema) => {
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/user/verify-otp",
+        {
+          email: data.email,
+          otp: data.otp,
+        },
+        { withCredentials: true }
+      );
+
+      setMessage(res.data.message || "Account verified and registered!");
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        setMessage(err.response?.data?.message || "OTP verification failed");
+      } else {
+        setMessage("Unexpected error during verification");
       }
     } finally {
       setLoading(false);
@@ -86,7 +118,7 @@ export function RegisterForm({
           </div>
           <form
             className="p-6 md:p-8"
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(verifyOtp)}
             noValidate
           >
             <div className="flex flex-col gap-6">
@@ -96,6 +128,8 @@ export function RegisterForm({
                   Register your HOMIES account
                 </p>
               </div>
+
+              {/* Name */}
               <div className="grid gap-3">
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -153,9 +187,30 @@ export function RegisterForm({
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Registering..." : "Register"}
-              </Button>
+              {/* Send OTP button */}
+              {!otpSent && (
+                <Button type="button" onClick={sendOtp} disabled={loading}>
+                  {loading ? "Sending OTP..." : "Get OTP"}
+                </Button>
+              )}
+
+              {/* OTP Input & Verify */}
+              {otpSent && (
+                <>
+                  <div className="grid gap-3">
+                    <Label htmlFor="otp">Enter OTP</Label>
+                    <Input
+                      id="otp"
+                      type="text"
+                      placeholder="Enter the OTP"
+                      {...register("otp")}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Verifying..." : "Verify OTP"}
+                  </Button>
+                </>
+              )}
 
               {message && (
                 <p className="text-center text-sm text-muted-foreground">
@@ -169,6 +224,7 @@ export function RegisterForm({
     </div>
   );
 }
+
 export default (parentRoute: RootRoute) =>
   createRoute({
     path: "/register",
