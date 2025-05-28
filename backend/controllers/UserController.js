@@ -22,9 +22,17 @@ async function register(req, res) {
       });
     }
     const userExists = await UserModel.findOne({ email });
+    const nameExists = await UserModel.findOne({ name });
     if (userExists) {
       return res.json({
         message: "Already registered",
+        error: true,
+        success: false,
+      });
+    }
+    if (nameExists) {
+      return res.json({
+        message: "Name already exists",
         error: true,
         success: false,
       });
@@ -216,6 +224,61 @@ const changePassword = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+const checkUserName = async (req, res) => {
+  try {
+    const { username } = req.body;
+    if (!username) {
+      return res.status(400).json({ message: "Username is required" });
+    }
+
+    const normalizedUsername = username.trim().toLowerCase();
+    const existingUser = await UserModel.findOne({
+      username: normalizedUsername,
+    });
+
+    res.status(200).json({ available: !existingUser });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+const updateUsername = async (req, res) => {
+  try {
+    const { email, newUsername } = req.body;
+
+    if (!email || !newUsername) {
+      return res
+        .status(400)
+        .json({ message: "Email and new username are required" });
+    }
+
+    const normalizedUsername = newUsername.trim().toLowerCase();
+
+    const user = await UserModel.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Check if the new username already exists and is not the current user's
+    const existingUser = await UserModel.findOne({ name: normalizedUsername });
+    if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+      return res.status(409).json({ message: "Username already taken" });
+    }
+    console.log(newUsername);
+    const eexistingUser = await UserModel.findOneAndUpdate(
+      { email },
+      { name: newUsername }
+    );
+
+    return res.json({
+      message: "Username updated successfully",
+      success: true,
+    });
+  } catch (err) {
+    console.error("Error updating username:", err);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+};
 module.exports = {
   register,
   login,
@@ -223,4 +286,6 @@ module.exports = {
   getUserByEmail,
   verifyPassword,
   changePassword,
+  checkUserName,
+  updateUsername,
 };
