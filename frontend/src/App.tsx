@@ -217,69 +217,78 @@ function App() {
           Available Rooms
         </h2>
         {/* Filters Section */}
-        <div className="bg-white rounded-2xl shadow p-4 mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Filters</h2>
-          <input
-            type="text"
-            placeholder="Search by title or location..."
-            className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <select
-            value={priceFilter}
-            onChange={(e) => setPriceFilter(e.target.value)}
-            className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg"
-          >
-            <option value="all">All Prices</option>
-            <option value="2500">Under ₹2500</option>
-            <option value="4000">Under ₹4000</option>
-            <option value="6000">Under ₹6000</option>
-          </select>
-          <select
-            value={roomTypeFilter}
-            onChange={(e) => setRoomTypeFilter(e.target.value)}
-            className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg"
-          >
-            <option value="all">All Room Types</option>
-            <option value="single">Single</option>
-            <option value="shared">Shared</option>
-            <option value="apartment">Apartment</option>
-          </select>
-          <input
-            type="date"
-            className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg"
-            value={availableFrom}
-            onChange={(e) => setAvailableFrom(e.target.value)}
-          />
-          <div className="text-sm font-medium mb-2">Amenities:</div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { key: "wifi", icon: <Wifi size={16} /> },
-              { key: "ac", icon: <Snowflake size={16} /> },
-              { key: "parking", icon: <Car size={16} /> },
-              { key: "furnished", icon: <Home size={16} /> },
-              { key: "washingMachine", icon: <CheckCircle size={16} /> },
-            ].map(({ key, icon }) => (
-              <button
-                key={key}
-                className={`text-xs px-3 py-1 rounded-full border flex items-center gap-1 ${
-                  amenityFilters.includes(key)
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-                onClick={() => {
-                  setAmenityFilters((prev) =>
-                    prev.includes(key)
-                      ? prev.filter((a) => a !== key)
-                      : [...prev, key]
-                  );
-                }}
-              >
-                {icon}
-                {key}
-              </button>
-            ))}
+        <div className="bg-white rounded-2xl shadow px-6 py-4 mb-8 sticky top-20 z-40">
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            {/* Search */}
+            <input
+              type="text"
+              placeholder="Search title or location"
+              className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+
+            {/* Price Filter */}
+            <select
+              value={priceFilter}
+              onChange={(e) => setPriceFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm"
+            >
+              <option value="all">All Prices</option>
+              <option value="2500">Under ₹2500</option>
+              <option value="4000">Under ₹4000</option>
+              <option value="6000">Under ₹6000</option>
+            </select>
+
+            {/* Room Type */}
+            <select
+              value={roomTypeFilter}
+              onChange={(e) => setRoomTypeFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm"
+            >
+              <option value="all">All Types</option>
+              <option value="single">Single</option>
+              <option value="shared">Shared</option>
+              <option value="apartment">Apartment</option>
+            </select>
+
+            {/* Available From */}
+            <input
+              type="date"
+              className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm"
+              value={availableFrom}
+              onChange={(e) => setAvailableFrom(e.target.value)}
+            />
+
+            {/* Amenities */}
+            <div className="flex gap-1 flex-wrap">
+              {[
+                { key: "wifi", icon: <Wifi size={16} /> },
+                { key: "ac", icon: <Snowflake size={16} /> },
+                { key: "parking", icon: <Car size={16} /> },
+                { key: "furnished", icon: <Home size={16} /> },
+                { key: "washingMachine", icon: <CheckCircle size={16} /> },
+              ].map(({ key, icon }) => (
+                <button
+                  key={key}
+                  className={`text-xs px-3 py-1 rounded-full border flex items-center gap-1 ${
+                    amenityFilters.includes(key)
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-gray-100 text-gray-700 border-gray-300"
+                  }`}
+                  onClick={() => {
+                    setAmenityFilters((prev) =>
+                      prev.includes(key)
+                        ? prev.filter((a) => a !== key)
+                        : [...prev, key]
+                    );
+                  }}
+                >
+                  {icon}
+                  {key}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         {loading ? (

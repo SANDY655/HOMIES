@@ -2,11 +2,11 @@ const { UserModel } = require("../models/UserModel");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const blacklist = require("../utils/tokenBlacklist");
-
+const bcrypt = require("bcrypt");
 dotenv.config();
 async function register(req, res) {
   try {
-    const { email, password, confirmPassword } = req.body;
+    const { name, email, password, confirmPassword } = req.body;
     if (!email || !password || !confirmPassword) {
       return res.status(400).json({
         message: "Please fill the required fields",
@@ -29,7 +29,7 @@ async function register(req, res) {
         success: false,
       });
     }
-    const newUser = new UserModel({ email, password });
+    const newUser = new UserModel({ name, email, password });
     const savedUser = await newUser.save();
     return res.json({
       message: "User registered successfully",
@@ -96,7 +96,7 @@ async function login(req, res) {
     const userData = {
       _id: user._id,
       email: user.email,
-      name: user.name || null,
+      name: user.name,
       // add more safe fields here as necessary
     };
 
@@ -165,5 +165,61 @@ async function getUserByEmail(req, res) {
     return res.status(500).json({ message: error.message, success: false });
   }
 }
+const verifyPassword = async (req, res) => {
+  try {
+    // Make sure auth middleware sets req.user
+    const { email, currentPassword } = req.body;
+    console.log(email);
+    if (!currentPassword || !email) {
+      return res
+        .status(400)
+        .json({ message: "Current password and email is required" });
+    }
 
-module.exports = { register, login, logout, getUserByEmail };
+    // Select password explicitly
+    const user = await UserModel.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect current password" });
+    }
+
+    return res.json({ message: "Password verified" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Please provide all required fields" });
+    }
+
+    // Select password explicitly
+    const user = await UserModel.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.password = newPassword;
+    await user.save();
+
+    return res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+module.exports = {
+  register,
+  login,
+  logout,
+  getUserByEmail,
+  verifyPassword,
+  changePassword,
+};

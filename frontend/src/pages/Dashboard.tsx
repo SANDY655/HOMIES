@@ -5,11 +5,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { MessageSquare } from "lucide-react";
+import {
+  MessageSquare,
+  User,
+  Home,
+  DoorOpen,
+  LogOut,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
-import { Home, DoorOpen, Settings, LogOut } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import socket from "../socket";
 import { createRoute, redirect, useNavigate } from "@tanstack/react-router";
@@ -32,11 +38,15 @@ function ConfirmLogout({
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-xl p-6 w-[90%] max-w-sm shadow-xl"
+        className="bg-white dark:bg-gray-900 rounded-xl p-6 w-[90%] max-w-sm shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-xl font-semibold mb-3">Confirm Logout</h3>
-        <p className="mb-5 text-gray-600">Are you sure you want to log out?</p>
+        <h3 className="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-100">
+          Confirm Logout
+        </h3>
+        <p className="mb-5 text-gray-600 dark:text-gray-300">
+          Are you sure you want to log out?
+        </p>
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={onCancel}>
             Cancel
@@ -50,11 +60,56 @@ function ConfirmLogout({
   );
 }
 
+function useOutsideClick(
+  ref: React.RefObject<HTMLDivElement>,
+  callback: () => void
+) {
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        callback();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [ref, callback]);
+}
+
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  useOutsideClick(profileMenuRef, () => setProfileMenuOpen(false));
+
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
+    } else {
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      const initialTheme = prefersDark ? "dark" : "light";
+      setTheme(initialTheme);
+      document.documentElement.classList.toggle(
+        "dark",
+        initialTheme === "dark"
+      );
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+  };
 
   const handleLogout = async () => {
     try {
@@ -68,13 +123,11 @@ export function Dashboard() {
           },
         });
       }
-    } catch (err) {
+    } catch {
       console.warn("Logout API failed. Proceeding with local logout.");
     }
 
-    if (socket.connected) {
-      socket.disconnect();
-    }
+    if (socket.connected) socket.disconnect();
 
     localStorage.removeItem("token");
     localStorage.removeItem("email");
@@ -95,29 +148,74 @@ export function Dashboard() {
   const handleSearchRooms = () => navigate({ to: "/search-rooms" });
   const handleMyRooms = () => navigate({ to: "/my-rooms" });
 
+   const goToProfile = () => {
+  setProfileMenuOpen(false);
+  const userId = localStorage.getItem("userId");
+  if (userId) {
+    navigate({ to: `/profile/${userId}` });
+  }
+};
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm px-6 py-3 flex items-center justify-between sticky top-0 z-40">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
+      <header className="bg-white dark:bg-gray-900 shadow px-6 py-3 flex items-center justify-between sticky top-0 z-40">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+          Dashboard
+        </h1>
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            className="gap-1 flex items-center justify-center p-5 m-1 text-sm text-gray-700  hover:bg-gray-200"
+            className="gap-1 p-5 m-1 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800"
             onClick={() => navigate({ to: "/chatwithsidebar" })}
-            aria-label="Open Chat"
-            title="Open Chat"
           >
             <MessageSquare size={20} />
             Chat
           </Button>
 
-          <Button
-            variant="destructive"
-            className="gap-2 text-sm"
-            onClick={onLogoutClick}
-          >
-            <LogOut size={18} /> Logout
-          </Button>
+          {/* Profile Icon & Dropdown */}
+          <div className="relative" ref={profileMenuRef}>
+            <button
+              onClick={() => setProfileMenuOpen((open) => !open)}
+              title={email || "User"}
+              className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-haspopup="true"
+              aria-expanded={profileMenuOpen}
+              aria-label="User menu"
+            >
+              <User size={20} />
+            </button>
+
+            {profileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
+                <button
+                  onClick={goToProfile}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <User size={18} />
+                  Profile
+                </button>
+
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+                  {theme === "light" ? "Dark Mode" : "Light Mode"}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    onLogoutClick();
+                  }}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-gray-700"
+                >
+                  <LogOut size={18} />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -174,11 +272,11 @@ function DashboardCard({
   return (
     <Card className="rounded-2xl shadow-md border hover:shadow-lg transition">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-800">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-white">
           {icon}
           {title}
         </CardTitle>
-        <CardDescription className="text-gray-600 mt-1">
+        <CardDescription className="text-gray-600 dark:text-gray-300 mt-1">
           {description}
         </CardDescription>
       </CardHeader>
@@ -188,7 +286,7 @@ function DashboardCard({
           className={`w-full mt-4 rounded-xl text-white font-medium ${color}`}
           onClick={onClick}
         >
-          {title}
+          Go
         </Button>
       </CardContent>
     </Card>

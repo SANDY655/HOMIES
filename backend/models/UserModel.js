@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const userSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      required: [true, "Provide Name"],
+    },
     email: {
       type: String,
       required: [true, "Provide Email"],
@@ -10,7 +14,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Provide Password"],
-      select: false,
     },
     isLoggedIn: {
       type: Boolean,

@@ -51,11 +51,11 @@ export function LoginForm({
 
       // Expecting backend to return { token, user }
       const { token, user } = response.data;
-
+      console.log(user);
       localStorage.setItem("token", token);
       localStorage.setItem("userId", user._id); // ✅ Fix: store from response
       localStorage.setItem("email", JSON.stringify(user.email)); // ✅ Optional: or store full user object
-
+      localStorage.setItem("username",user.name);
       setMessage("Login Successful");
       const redirectTo = router.state.location.search.redirect ?? "/dashboard";
       router.navigate({ to: redirectTo });
