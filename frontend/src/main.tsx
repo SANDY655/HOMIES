@@ -26,6 +26,7 @@ import MyRoomsRoute from "./pages/MyRooms.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import EditRoomRoute from "./pages/EditRoom.tsx";
 import ChatWithSidebarRoute from "./pages/ChatWithSidebar.tsx";
+import ProfileRoute from "./pages/Profile.tsx";
 const queryClient = new QueryClient();
 const rootRoute = createRootRoute({
   component: () => (
@@ -55,6 +56,7 @@ const routeTree = rootRoute.addChildren([
   RoomRoute(rootRoute),
   EditRoomRoute(rootRoute),
   ChatWithSidebarRoute(rootRoute),
+  ProfileRoute(rootRoute),
 ]);
 
 const router = createRouter({
