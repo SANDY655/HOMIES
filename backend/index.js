@@ -38,17 +38,16 @@ io.on("connection", (socket) => {
   });
 
   socket.on("sendMessage", async ({ roomId, message, sender }) => {
-    const user = await UserModel.findById(sender).select("email");
+    const user = await UserModel.findById(sender);
     const senderEmail = user?.email || "Unknown";
-
     const msg = {
       message,
       sender,
       senderEmail,
+      senderName: user?.name,
       timestamp: new Date().toISOString(),
       chatRoomId: roomId,
     }; // Emit to all clients in the room, including the sender
-
     socket.to(roomId).emit("receiveMessage", msg);
     io.to(roomId).emit("updateMessage", msg);
   });

@@ -31,7 +31,8 @@ const getMessagesByChatRoom = async (req, res) => {
 
     const messages = await Message.find({ chatRoom: chatRoomId })
       .sort({ timestamp: 1 }) // Sort by time
-      .populate("sender", "email"); // Optional: get sender info
+      .populate("sender", "email name"); // Optional: get sender info
+    console.log(messages);
     res.status(200).json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);

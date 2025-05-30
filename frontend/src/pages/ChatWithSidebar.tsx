@@ -15,6 +15,7 @@ import { ArrowLeftIcon } from "lucide-react";
 interface Participant {
   _id: string;
   email: string;
+  name: string;
 }
 
 interface LatestMessage {
@@ -55,6 +56,7 @@ export function ChatWithSidebar() {
         const res = await axios.get<ChatRoom[]>(
           `http://localhost:5000/api/chatroom/${currentUserId}`
         );
+        console.log("Fetched chat rooms:", res.data);
         setChatRooms(res.data);
 
         res.data.forEach((room) => {
@@ -157,7 +159,7 @@ export function ChatWithSidebar() {
       const otherParticipant = room.participants.find(
         (p) => p._id !== currentUserId
       );
-      const displayName = otherParticipant?.email || "Unknown";
+      const displayName = otherParticipant?.name || "Unknown";
 
       return (
         <li

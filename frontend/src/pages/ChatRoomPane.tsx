@@ -35,6 +35,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
           text: msg.content,
           senderId: msg.sender._id,
           senderEmail: msg.sender.email,
+          senderName: msg.sender.name || "Unknown",
           timestamp: msg.timestamp,
         }));
         setMessages(formattedMessages);
@@ -63,6 +64,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
         const newMsg = {
           text: msg.message,
           senderId: msg.sender,
+          senderName: msg.senderName || "Unknown",
           senderEmail: msg.senderEmail,
           timestamp: msg.timestamp,
         };
@@ -137,7 +139,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
               >
                 {" "}
                 <div className="text-sm font-semibold">
-                  {msg.senderId === currentUserId ? "Me" : msg.senderEmail}
+                  {msg.senderId === currentUserId ? "You" : msg.senderName}
                 </div>
                 <div>{msg.text}</div>{" "}
                 <div className="text-xs text-gray-500">

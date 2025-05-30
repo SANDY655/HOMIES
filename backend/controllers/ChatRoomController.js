@@ -36,7 +36,7 @@ const getUserChatRooms = async (req, res) => {
     const chatRooms = await ChatRoom.find({
       participants: userId,
     })
-      .populate("participants", "email avatar") // populate participants info you want
+      .populate("participants", "email name") // populate participants info you want
       .populate({
         path: "roomId", // populate the Room document
         populate: {
