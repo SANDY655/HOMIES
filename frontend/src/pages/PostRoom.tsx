@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import {
   Stepper,
   Step,
@@ -22,7 +22,7 @@ import {
   useNavigate,
   type RootRoute,
 } from "@tanstack/react-router";
-import { motion } from "framer-motion"; // Import framer-motion
+import { motion } from "framer-motion";
 import axios from "axios";
 import { Autocomplete } from "@mui/material";
 import debounce from "lodash/debounce";
@@ -68,7 +68,7 @@ const defaultForm = {
   deposit: 0,
   availableFrom: "",
   roomType: "",
-  images: [""],
+  images: [],
   amenities: {
     wifi: false,
     ac: false,
@@ -79,21 +79,30 @@ const defaultForm = {
 };
 
 export function PostRoom() {
-  const navigate = useNavigate(); // get navigate function
+  const navigate = useNavigate();
 
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState<string>(
+    localStorage.getItem("theme") || "light"
+  );
+
+  // Listen for theme changes from localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setTheme(localStorage.getItem("theme") || "light");
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    if (name === "location") {
-      fetchLocationSuggestions(value);
-    }
-
     if (name.includes("amenities.")) {
       const key = name.split(".")[1];
       setForm((prev) => ({
@@ -155,6 +164,7 @@ export function PostRoom() {
       }));
     } catch (error) {
       console.error("Upload failed", error);
+      alert("Image upload failed.");
     }
   };
 
@@ -179,11 +189,13 @@ export function PostRoom() {
   };
 
   const handleBack = () => setStep((prev) => prev - 1);
+
   const handleReset = () => {
     setStep(0);
     setForm(defaultForm);
     setErrors({});
   };
+
   const fetchLocationSuggestions = async (query) => {
     if (!query) {
       setLocationSuggestions([]);
@@ -195,30 +207,39 @@ export function PostRoom() {
           query
         )}&limit=5&format=json`
       );
-
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (res.status === 401) {
+          console.error("LocationIQ API Key is invalid or missing.");
+        } else {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        setLocationSuggestions([]); // Clear suggestions on error
+        return;
       }
-
       const data = await res.json();
-      setLocationSuggestions(data);
+      if (Array.isArray(data)) {
+        setLocationSuggestions(data);
+      } else {
+        console.error("LocationIQ API returned unexpected data:", data);
+        setLocationSuggestions([]);
+      }
     } catch (error) {
       console.error("Error fetching location suggestions:", error);
       setLocationSuggestions([]);
     }
   };
+
   const debouncedFetchLocationSuggestions = useCallback(
     debounce((query) => {
       fetchLocationSuggestions(query);
     }, 500),
-    [] // empty dependencies = create once on mount
+    []
   );
 
   const handleSubmit = async () => {
     setLoading(true);
-
     const userEmail = localStorage.getItem("email")?.replace(/^"|"$/g, "");
-    const userId = localStorage.getItem("userId");
+    const userId = localStorage.getItem("userId")?.replace(/^"|"$/g, "");
     const formData = { ...form, email: userEmail, userId: userId };
 
     try {
@@ -241,6 +262,7 @@ export function PostRoom() {
       if (result.success) {
         alert("Room posted successfully!");
         handleReset();
+        navigate({ to: "/dashboard" });
       } else {
         alert("Something went wrong. Please try again.");
       }
@@ -271,7 +293,26 @@ export function PostRoom() {
                 helperText={errors.title}
                 variant="outlined"
                 size="small"
-                sx={{ marginBottom: 2 }}
+                sx={{
+                  marginBottom: 2,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme === "dark" ? "#555" : undefined,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: theme === "dark" ? "#777" : undefined,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: theme === "dark" ? "#999" : undefined,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme === "dark" ? "#ddd" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    color: theme === "dark" ? "#fff" : undefined,
+                  },
+                }}
               />
               <TextField
                 label="Description"
@@ -285,7 +326,26 @@ export function PostRoom() {
                 helperText={errors.description}
                 variant="outlined"
                 size="small"
-                sx={{ marginBottom: 2 }}
+                sx={{
+                  marginBottom: 2,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme === "dark" ? "#555" : undefined,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: theme === "dark" ? "#777" : undefined,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: theme === "dark" ? "#999" : undefined,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme === "dark" ? "#ddd" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    color: theme === "dark" ? "#fff" : undefined,
+                  },
+                }}
               />
               <Autocomplete
                 freeSolo
@@ -293,14 +353,11 @@ export function PostRoom() {
                 getOptionLabel={(option) =>
                   typeof option === "string" ? option : option.display_name
                 }
-                filterOptions={(x) => x} // disable built-in filtering, since API already filters
+                filterOptions={(x) => x}
                 inputValue={form.location}
                 onInputChange={(event, newInputValue, reason) => {
                   if (reason === "input") {
-                    setForm((prev) => ({
-                      ...prev,
-                      location: newInputValue,
-                    }));
+                    setForm((prev) => ({ ...prev, location: newInputValue }));
                     debouncedFetchLocationSuggestions(newInputValue);
                   }
                 }}
@@ -310,6 +367,10 @@ export function PostRoom() {
                       ...prev,
                       location: newValue.display_name,
                     }));
+                  } else if (typeof newValue === "string") {
+                    setForm((prev) => ({ ...prev, location: newValue }));
+                  } else {
+                    setForm((prev) => ({ ...prev, location: "" }));
                   }
                 }}
                 renderInput={(params) => (
@@ -321,9 +382,47 @@ export function PostRoom() {
                     fullWidth
                     error={!!errors.location}
                     helperText={errors.location}
-                    sx={{ marginBottom: 2 }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: theme === "dark" ? "#555" : undefined,
+                        },
+                        "&:hover fieldset": {
+                          borderColor: theme === "dark" ? "#777" : undefined,
+                        },
+                        "&.Mui-focused fieldset": {
+                          borderColor: theme === "dark" ? "#999" : undefined,
+                        },
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: theme === "dark" ? "#ddd" : undefined,
+                      },
+                      "& .MuiInputBase-input": {
+                        color: theme === "dark" ? "#fff" : undefined,
+                      },
+                    }}
                   />
                 )}
+                sx={{
+                  marginBottom: 2,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme === "dark" ? "#555" : undefined,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: theme === "dark" ? "#777" : undefined,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: theme === "dark" ? "#999" : undefined,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme === "dark" ? "#ddd" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    color: theme === "dark" ? "#fff" : undefined,
+                  },
+                }}
               />
 
               <TextField
@@ -337,7 +436,26 @@ export function PostRoom() {
                 variant="outlined"
                 size="small"
                 fullWidth
-                sx={{ marginBottom: 2 }}
+                sx={{
+                  marginBottom: 2,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme === "dark" ? "#555" : undefined,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: theme === "dark" ? "#777" : undefined,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: theme === "dark" ? "#999" : undefined,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme === "dark" ? "#ddd" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    color: theme === "dark" ? "#fff" : undefined,
+                  },
+                }}
               />
               <TextField
                 label="Deposit (₹)"
@@ -350,7 +468,26 @@ export function PostRoom() {
                 variant="outlined"
                 size="small"
                 fullWidth
-                sx={{ marginBottom: 2 }}
+                sx={{
+                  marginBottom: 2,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme === "dark" ? "#555" : undefined,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: theme === "dark" ? "#777" : undefined,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: theme === "dark" ? "#999" : undefined,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme === "dark" ? "#ddd" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    color: theme === "dark" ? "#fff" : undefined,
+                  },
+                }}
               />
               <TextField
                 label="Available From"
@@ -364,7 +501,26 @@ export function PostRoom() {
                 variant="outlined"
                 size="small"
                 fullWidth
-                sx={{ marginBottom: 2 }}
+                sx={{
+                  marginBottom: 2,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme === "dark" ? "#555" : undefined,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: theme === "dark" ? "#777" : undefined,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: theme === "dark" ? "#999" : undefined,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme === "dark" ? "#ddd" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    color: theme === "dark" ? "#fff" : undefined,
+                  },
+                }}
               />
               <TextField
                 select
@@ -377,7 +533,35 @@ export function PostRoom() {
                 variant="outlined"
                 size="small"
                 fullWidth
-                sx={{ marginBottom: 2 }}
+                sx={{
+                  marginBottom: 2,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme === "dark" ? "#555" : undefined,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: theme === "dark" ? "#777" : undefined,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: theme === "dark" ? "#999" : undefined,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme === "dark" ? "#ddd" : undefined,
+                  },
+                  "& .MuiInputBase-input": {
+                    color: theme === "dark" ? "#fff" : undefined,
+                  },
+                  "& .MuiMenu-list": {
+                    backgroundColor: theme === "dark" ? "#333" : "#fff",
+                    color: theme === "dark" ? "#fff" : "#000",
+                  },
+                  "& .MuiMenuItem-root": {
+                    "&:hover": {
+                      backgroundColor: theme === "dark" ? "#444" : "#eee",
+                    },
+                  },
+                }}
               >
                 <MenuItem value="single">Single</MenuItem>
                 <MenuItem value="shared">Shared</MenuItem>
@@ -387,39 +571,6 @@ export function PostRoom() {
           </Stack>
         );
 
-        return (
-          <Box>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => handleUpload(e.target.files)}
-                style={{ marginTop: "10px" }}
-              />
-            </motion.div>
-            <Stack direction="row" spacing={2} mt={3} flexWrap="wrap">
-              {form.images.map((url, index) => (
-                <Avatar
-                  key={index}
-                  src={url}
-                  variant="rounded"
-                  sx={{
-                    width: 150,
-                    height: 150,
-                    borderRadius: 2,
-                    boxShadow: 3,
-                    marginBottom: 2,
-                  }}
-                />
-              ))}
-            </Stack>
-          </Box>
-        );
       case 1:
         return (
           <Box>
@@ -431,7 +582,15 @@ export function PostRoom() {
               <Button
                 variant="outlined"
                 component="label"
-                sx={{ mt: 2, mb: 2 }}
+                sx={{
+                  mt: 2,
+                  mb: 2,
+                  color: theme === "dark" ? "#bbb" : undefined,
+                  borderColor: theme === "dark" ? "#555" : undefined,
+                  "&:hover": {
+                    borderColor: theme === "dark" ? "#777" : undefined,
+                  },
+                }}
               >
                 Upload Images
                 <input
@@ -442,6 +601,11 @@ export function PostRoom() {
                   onChange={(e) => handleUpload(e.target.files)}
                 />
               </Button>
+              {errors.images && (
+                <Typography color="error" variant="caption" display="block">
+                  {errors.images}
+                </Typography>
+              )}
             </motion.div>
 
             <Stack direction="row" spacing={2} flexWrap="wrap" mt={2}>
@@ -476,6 +640,7 @@ export function PostRoom() {
                       minWidth: "initial",
                       padding: "4px",
                       backgroundColor: "rgba(255,255,255,0.7)",
+                      color: "black",
                       ":hover": {
                         backgroundColor: "rgba(255,0,0,0.8)",
                         color: "white",
@@ -498,6 +663,7 @@ export function PostRoom() {
               justifyContent="center"
               alignItems="center"
               spacing={2}
+              flexWrap="wrap"
             >
               {Object.keys(form.amenities).map((key) => (
                 <FormControlLabel
@@ -507,6 +673,12 @@ export function PostRoom() {
                       name={`amenities.${key}`}
                       checked={form.amenities[key]}
                       onChange={handleChange}
+                      sx={{
+                        color: theme === "dark" ? "#bbb" : undefined,
+                        "&.Mui-checked": {
+                          color: theme === "dark" ? "#4caf50" : undefined,
+                        },
+                      }}
                     />
                   }
                   label={key
@@ -516,6 +688,7 @@ export function PostRoom() {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
+                    color: theme === "dark" ? "#ddd" : undefined,
                   }}
                 />
               ))}
@@ -525,37 +698,74 @@ export function PostRoom() {
       case 3:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: theme === "dark" ? "#fff" : undefined }}
+            >
               Confirm Your Room Details
             </Typography>
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Typography>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 3,
+                backgroundColor: theme === "dark" ? "#444" : undefined,
+                borderColor: theme === "dark" ? "#666" : undefined,
+              }}
+            >
+              <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Title:</strong> {form.title}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Description:</strong> {form.description}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Location:</strong> {form.location}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Rent:</strong> ₹{form.rent}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Deposit:</strong> ₹{form.deposit}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Available From:</strong> {form.availableFrom}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Room Type:</strong> {form.roomType}
               </Typography>
-              <Typography>
+              <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Amenities:</strong>{" "}
                 {Object.keys(form.amenities)
                   .filter((key) => form.amenities[key])
-                  .join(", ")}
+                  .map((key) =>
+                    key
+                      .replace(/([A-Z])/g, " $1")
+                      .replace(/^./, (s) => s.toUpperCase())
+                  )
+                  .join(", ") || "None"}
               </Typography>
+              {form.images.length > 0 && (
+                <Box mt={2}>
+                  <Typography
+                    variant="subtitle1"
+                    gutterBottom
+                    sx={{ color: theme === "dark" ? "#fff" : undefined }}
+                  >
+                    Images:
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    {form.images.map((url, index) => (
+                      <Avatar
+                        key={index}
+                        src={url}
+                        variant="rounded"
+                        sx={{ width: 50, height: 50 }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
             </Paper>
           </Box>
         );
@@ -565,16 +775,44 @@ export function PostRoom() {
   };
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate({ to: "/dashboard" })}
-        sx={{ mb: 3 }}
-        variant="outlined"
-        className="h-min top-5 left-0  p-2 wrap-break-word"
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: "100%",
+        minHeight: "calc(100vh - 64px)", // Adjust based on your header height
+        backgroundColor: theme === "dark" ? "#1a202c" : "#f7fafc", // Tailwind gray-900 equivalent
+        color: theme === "dark" ? "#fff" : "#000",
+        p: 3,
+      }}
+    >
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "950px",
+          display: "flex",
+          justifyContent: "flex-start",
+          mb: 3,
+        }}
       >
-        Back to Dashboard
-      </Button>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => navigate({ to: "/dashboard" })}
+          sx={{
+            mb: 3,
+            color: theme === "dark" ? "#bbb" : undefined,
+            borderColor: theme === "dark" ? "#555" : undefined,
+            "&:hover": {
+              borderColor: theme === "dark" ? "#777" : undefined,
+            },
+          }}
+          variant="outlined"
+        >
+          Back to Dashboard
+        </Button>
+      </Box>
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -582,24 +820,45 @@ export function PostRoom() {
         style={{
           maxWidth: "950px",
           width: "100%",
-          marginTop: 40,
+          marginTop: 0,
         }}
       >
-        <Paper sx={{ p: 4 }}>
+        <Paper
+          sx={{
+            p: 4,
+            backgroundColor: theme === "dark" ? "#2d3748" : "#fff",
+            color: theme === "dark" ? "#fff" : "#000",
+            boxShadow:
+              theme === "dark"
+                ? "0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.25)"
+                : undefined,
+          }}
+        >
           <Stepper
             activeStep={step}
             alternativeLabel
-            sx={{ mb: 5 }}
-            connectorProps={{
-              style: {
-                borderColor:
-                  step === 0
-                    ? "#ccc"
-                    : step === 1
-                    ? "#4caf50"
-                    : step === 2
-                    ? "#ff9800"
-                    : "#0073e6",
+            sx={{
+              mb: 5,
+              "& .MuiStepConnector-line": {
+                borderColor: theme === "dark" ? "#444" : undefined,
+              },
+              "& .MuiStepLabel-label": {
+                color: theme === "dark" ? "#ddd" : undefined,
+                "&.Mui-active": {
+                  color: theme === "dark" ? "#fff" : undefined,
+                },
+                "&.Mui-completed": {
+                  color: theme === "dark" ? "#bbb" : undefined,
+                },
+              },
+              "& .MuiStepIcon-root": {
+                color: theme === "dark" ? "#555" : undefined,
+                "&.Mui-active": {
+                  color: theme === "dark" ? "#4caf50" : undefined,
+                },
+                "&.Mui-completed": {
+                  color: theme === "dark" ? "#0073e6" : undefined,
+                },
               },
             }}
           >
@@ -608,11 +867,33 @@ export function PostRoom() {
                 <StepLabel
                   sx={{
                     "& .MuiStepLabel-label": {
-                      color: step >= index ? "#0073e6" : "#888",
+                      color:
+                        theme === "dark"
+                          ? "#ddd"
+                          : step >= index
+                          ? "#0073e6"
+                          : "#888",
                       fontWeight: step === index ? "bold" : "normal",
+                      "&.Mui-active": {
+                        color: theme === "dark" ? "#fff" : "#0073e6",
+                      },
+                      "&.Mui-completed": {
+                        color: theme === "dark" ? "#bbb" : "#0073e6",
+                      },
                     },
                     "& .MuiSvgIcon-root": {
-                      color: step >= index ? "#0073e6" : "#ccc",
+                      color:
+                        theme === "dark"
+                          ? "#555"
+                          : step >= index
+                          ? "#0073e6"
+                          : "#ccc",
+                      "&.Mui-active": {
+                        color: theme === "dark" ? "#4caf50" : "#0073e6",
+                      },
+                      "&.Mui-completed": {
+                        color: theme === "dark" ? "#0073e6" : "#0073e6",
+                      },
                     },
                   }}
                 >
@@ -624,7 +905,7 @@ export function PostRoom() {
           <Box sx={{ mt: 3 }}>{getStepContent()}</Box>
           <Box mt={3} display="flex" justifyContent="center">
             <Button
-              disabled={step === 0}
+              disabled={step === 0 || loading}
               onClick={handleBack}
               sx={{ mr: 3 }}
               variant="outlined"
@@ -641,8 +922,9 @@ export function PostRoom() {
                 color="primary"
                 onClick={handleSubmit}
                 startIcon={<CheckCircleOutline />}
+                disabled={loading} // Disable submit button while loading
               >
-                Confirm & Submit
+                {loading ? "Submitting..." : "Confirm & Submit"}
               </Button>
             )}
           </Box>

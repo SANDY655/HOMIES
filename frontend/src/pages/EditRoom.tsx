@@ -8,12 +8,31 @@ import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
+// Assuming you have these types or similar defined elsewhere
+interface Room {
+  _id: string;
+  title: string;
+  description: string;
+  location: string;
+  rent: number | string; // Allow string for initial form state
+  deposit: number | string; // Allow string for initial form state
+  roomType: string;
+  amenities: {
+    wifi: boolean;
+    ac: boolean;
+    parking: boolean;
+    furnished: boolean;
+    washingMachine: boolean;
+  };
+  images: string[];
+}
+
 export function EditRoom() {
   const { roomId } = useParams({ strict: false }) as { roomId: string };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Room>({
     title: "",
     description: "",
     rent: "",
@@ -28,9 +47,44 @@ export function EditRoom() {
       washingMachine: false,
     },
     images: [],
+    _id: "", // Add _id to formData state
   });
 
-  const { data: room, isLoading } = useQuery({
+  const [theme, setTheme] = useState<string>(
+    localStorage.getItem("theme") || "light"
+  );
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setTheme(localStorage.getItem("theme") || "light");
+    };
+    window.addEventListener("storage", handleStorageChange);
+    // Apply theme class to documentElement on initial load
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [theme]); // Dependency on theme ensures the effect reruns if theme state changes
+
+  // Apply theme class to documentElement on initial load and theme change
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
+
+  const {
+    data: room,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["room", roomId],
     queryFn: async () => {
       const res = await fetch(`http://localhost:5000/api/room/${roomId}`);
@@ -44,19 +98,23 @@ export function EditRoom() {
   useEffect(() => {
     if (room) {
       setFormData({
-        title: room.title,
-        description: room.description,
-        rent: room.rent,
-        deposit: room.deposit,
-        location: room.location,
-        roomType: room.roomType,
-        amenities: room.amenities || {},
-        images: room.images,
+        ...room, // Spread existing room data including _id
+        rent: String(room.rent), // Ensure rent and deposit are strings for input value
+        deposit: String(room.deposit),
+        amenities: room.amenities || {
+          // Ensure amenities is an object
+          wifi: false,
+          ac: false,
+          parking: false,
+          furnished: false,
+          washingMachine: false,
+        },
+        images: room.images || [], // Ensure images is an array
       });
     }
   }, [room]);
 
-  function getPublicIdFromUrl(url: string) {
+  function getPublicIdFromUrl(url: string): string {
     const parts = url.split("/");
     const fileWithExt = parts[parts.length - 1];
     const folder = parts[parts.length - 2];
@@ -124,7 +182,7 @@ export function EditRoom() {
   }
 
   const updateMutation = useMutation({
-    mutationFn: async (updatedRoom) => {
+    mutationFn: async (updatedRoom: Room) => {
       const res = await fetch(`http://localhost:5000/api/room/${roomId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -138,10 +196,17 @@ export function EditRoom() {
       queryClient.invalidateQueries({ queryKey: ["myRooms"] });
       navigate({ to: "/my-rooms" });
     },
+    onError: (error: any) => {
+      alert("Update failed: " + error.message);
+    },
   });
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const { name, value } = e.target;
+  function handleChange(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) {
+    const { name, value, type } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -153,115 +218,147 @@ export function EditRoom() {
     }));
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen text-lg font-semibold text-gray-600 dark:text-gray-300">
+        Loading room...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen text-lg font-semibold text-red-600 dark:text-red-400">
+        Error loading room: {error.message}
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen py-10 px-6 md:px-12 lg:px-24 bg-gray-50">
+    <div className="min-h-screen py-10 px-6 md:px-12 lg:px-24 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       <div className="max-w-3xl mx-auto">
         {/* 🔙 Back Navigation */}
         <button
           onClick={() => navigate({ to: "/my-rooms" })}
-          className="mb-6 flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition"
+          className="mb-6 flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition dark:text-gray-400 dark:hover:text-blue-400"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to My Rooms
         </button>
 
-        <h1 className="text-3xl font-bold mb-6">Edit Room</h1>
+        <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+          Edit Room
+        </h1>
 
-        {isLoading ? (
-          <p>Loading room...</p>
-        ) : (
-          <Card>
-            <CardContent className="p-6 space-y-6">
-              {/* Basic fields */}
-              {[
-                "title",
-                "description",
-                "location",
-                "rent",
-                "deposit",
-                "roomType",
-              ].map((field) => (
-                <div key={field}>
-                  <Label htmlFor={field}>
-                    {field.charAt(0).toUpperCase() + field.slice(1)}
-                  </Label>
-                  <Input
-                    id={field}
-                    name={field}
-                    value={formData[field]}
-                    onChange={handleChange}
-                  />
-                </div>
-              ))}
+        <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+          <CardContent className="p-6 space-y-6">
+            {/* Basic fields */}
+            {[
+              "title",
+              "description",
+              "location",
+              "rent",
+              "deposit",
+              "roomType",
+            ].map((field) => (
+              <div key={field}>
+                <Label
+                  htmlFor={field}
+                  className="text-gray-700 dark:text-gray-300"
+                >
+                  {field.charAt(0).toUpperCase() + field.slice(1)}
+                </Label>
+                <Input
+                  id={field}
+                  name={field}
+                  value={formData[field as keyof typeof formData]} // Type assertion
+                  onChange={handleChange}
+                  className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
+                />
+              </div>
+            ))}
 
-              {/* Amenities checkboxes */}
+            {/* Amenities checkboxes */}
+            <div>
+              <Label className="block mb-2 text-gray-700 dark:text-gray-300">
+                Amenities
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(formData.amenities).map(([key, value]) => (
+                  <label
+                    key={key}
+                    className="flex items-center gap-2 capitalize text-gray-700 dark:text-gray-300"
+                  >
+                    <input
+                      type="checkbox"
+                      name={key}
+                      checked={value}
+                      onChange={handleAmenityChange}
+                      className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out dark:text-blue-400"
+                    />
+                    {key}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Upload new images */}
+            <div className="mt-4">
+              <Label className="block mb-2 text-gray-700 dark:text-gray-300">
+                Upload New Images
+              </Label>
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleImageUpload([...e.target.files!])} // Use non-null assertion
+                className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 file:dark:text-gray-200"
+              />
+            </div>
+
+            {/* Preview images */}
+            {formData.images?.length > 0 && (
               <div>
-                <Label className="block mb-2">Amenities</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(formData.amenities).map(([key, value]) => (
-                    <label
-                      key={key}
-                      className="flex items-center gap-2 capitalize"
-                    >
-                      <input
-                        type="checkbox"
-                        name={key}
-                        checked={value}
-                        onChange={handleAmenityChange}
+                <Label className="block mb-2 text-gray-700 dark:text-gray-300">
+                  Room Images
+                </Label>
+                <div className="grid grid-cols-3 gap-4">
+                  {formData.images.map((img, idx) => (
+                    <div key={idx} className="relative group">
+                      <img
+                        src={img}
+                        alt={`Room image ${idx + 1}`}
+                        className="h-24 w-full object-cover rounded"
                       />
-                      {key}
-                    </label>
+                      <button
+                        onClick={() => handleDeleteImage(img)}
+                        title="Delete image"
+                        className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity dark:bg-red-700"
+                        type="button"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
+            )}
 
-              {/* Upload new images */}
-              <div className="mt-4">
-                <Label className="block mb-2">Upload New Images</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleImageUpload([...e.target.files])}
-                />
-              </div>
-
-              {/* Preview images */}
-              {formData.images?.length > 0 && (
-                <div>
-                  <Label className="block mb-2">Room Images</Label>
-                  <div className="grid grid-cols-3 gap-4">
-                    {formData.images.map((img, idx) => (
-                      <div key={idx} className="relative group">
-                        <img
-                          src={img}
-                          alt={`Room image ${idx + 1}`}
-                          className="h-24 w-full object-cover rounded"
-                        />
-                        <button
-                          onClick={() => handleDeleteImage(img)}
-                          title="Delete image"
-                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          type="button"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Submit button */}
-              <Button
-                onClick={() => updateMutation.mutate(formData)}
-                disabled={updateMutation.isPending}
-              >
-                {updateMutation.isPending ? "Saving..." : "Save Changes"}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+            {/* Submit button */}
+            <Button
+              onClick={() => updateMutation.mutate(formData)}
+              disabled={updateMutation.isPending || isLoading} // Disable if loading room or updating
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white disabled:bg-gray-400 dark:disabled:bg-gray-600"
+            >
+              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+            {updateMutation.isError && (
+              <p className="text-red-600 dark:text-red-400">
+                Error saving changes.
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -273,10 +370,10 @@ export default (parentRoute: RootRoute) =>
     path: "/edit-room/$roomId",
     getParentRoute: () => parentRoute,
     component: EditRoom,
-    beforeLoad: () => {
-      const isLoggedIn = !!localStorage.getItem("email");
-      if (!isLoggedIn) {
-        throw redirect({ to: "/login" });
+    beforeLoad: ({ context, location }) => {
+      // Assuming auth is managed by context and redirects unauthenticated users
+      if (!context.auth.isAuthenticated()) {
+        throw redirect({ to: "/", search: { redirect: location.href } });
       }
     },
   });
