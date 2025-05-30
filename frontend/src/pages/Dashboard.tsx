@@ -44,18 +44,18 @@ function ConfirmLogout({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-          Confirm Logout
+          Confirm Session Termination
         </h3>
         <p className="mb-6 text-gray-600 dark:text-gray-300">
-          Are you sure you want to log out? You will need to log in again to
-          access your dashboard.
+          Are you certain you wish to end your session? Re-authentication will
+          be required to access your personalized dashboard.
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={onCancel}>
-            Cancel
+            Retain Session
           </Button>
           <Button variant="destructive" onClick={onConfirm}>
-            Logout
+            Terminate Session
           </Button>
         </div>
       </div>
@@ -82,7 +82,7 @@ function useOutsideClick(
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
   const navigate = useNavigate();
-  const username = localStorage.getItem("username") || "User";
+  const username = localStorage.getItem("username") || "Valued Member";
   const queryClient = useQueryClient();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -129,7 +129,7 @@ export function Dashboard() {
         });
       }
     } catch {
-      console.warn("Logout API failed. Proceeding with local logout.");
+      console.warn("Logout API failed. Proceeding with local session clear.");
     }
 
     if (socket.connected) socket.disconnect();
@@ -161,33 +161,26 @@ export function Dashboard() {
   };
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center transition-colors duration-300 relative"
-      style={{
-        backgroundImage: `url('https://wallpaperaccess.com/full/2470869.jpg')`,
-      }}
-    >
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black opacity-40"></div>
-
-      <header className="relative z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-lg px-6 py-4 flex items-center justify-between sticky top-0 rounded-b-lg">
-        <h1 className="text-3xl font-extrabold text-gray-800 dark:text-gray-100 drop-shadow">
-          Welcome, {username}!
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 text-gray-900 font-sans dark:from-gray-800 dark:via-gray-900 dark:to-black dark:text-gray-100">
+      {/* Header */}
+      <header className="bg-white bg-opacity-90 backdrop-blur-md border-b border-gray-200 px-8 py-5 flex justify-between items-center shadow-md sticky top-0 z-30 dark:bg-gray-900 dark:bg-opacity-90 dark:border-gray-700">
+        <h1 className="text-3xl font-extrabold text-indigo-700 tracking-wide select-none dark:text-indigo-400">
+          🏠 Welcome, {username}!
         </h1>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <Button
-            variant="ghost"
-            className="gap-2 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200/60 dark:hover:bg-gray-800/60 rounded-lg transition-all duration-200"
             onClick={() => navigate({ to: "/chatwithsidebar" })}
+            className="p-2 bg-white text-blue-600 hover:bg-gray-100 border border-gray-300 rounded-full dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700 dark:border-gray-600"
+            variant="ghost"
           >
-            <MessageSquare size={20} />
-            Chat
+            <MessageSquare className="w-6 h-6" />
           </Button>
+
           <div className="relative" ref={profileMenuRef}>
             <button
               onClick={() => setProfileMenuOpen((open) => !open)}
               title={email || "User"}
-              className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-blue-700 dark:focus:ring-blue-600"
               aria-haspopup="true"
               aria-expanded={profileMenuOpen}
               aria-label="User menu"
@@ -201,14 +194,16 @@ export function Dashboard() {
                   className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   <User size={18} />
-                  Profile
+                  View Profile
                 </button>
                 <button
                   onClick={toggleTheme}
                   className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-                  {theme === "light" ? "Dark Mode" : "Light Mode"}
+                  {theme === "light"
+                    ? "Switch to Dark Mode"
+                    : "Switch to Light Mode"}
                 </button>
                 <div className="border-t border-gray-200 dark:border-gray-700"></div>
                 <button
@@ -219,49 +214,47 @@ export function Dashboard() {
                   className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   <LogOut size={18} />
-                  Logout
+                  End Session
                 </button>
               </div>
             )}
           </div>
         </div>
       </header>
+
       <ConfirmLogout
         isOpen={logoutModalOpen}
         onConfirm={onConfirmLogout}
         onCancel={onCancelLogout}
       />
-      <main className="relative z-30 max-w-6xl mx-auto px-6 py-12 text-center">
-        <h2 className="text-4xl font-extrabold text-white mb-4 drop-shadow-lg">
-          Discover Your Ideal Rental Property.
-        </h2>
-        <p className="text-lg text-gray-200 mb-12 drop-shadow">
-          Connecting you with comfortable spaces and compatible people.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <main className="max-w-7xl mx-auto py-14 px-6 sm:px-10 lg:px-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           <DashboardCard
-            title="List Your Space"
-            description="Easily showcase your available room to a community of potential roommates."
-            icon={<Home size={28} className="text-white" />}
+            title="Post a Room"
+            description="Create a new room listing to rent or share."
+            icon={<Home size={26} className="text-white" />}
             onClick={handleRoomPosting}
-            color="bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            color="bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 dark:from-blue-700 dark:to-purple-800 dark:hover:from-blue-800 dark:hover:to-purple-900"
             image="https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923__480.jpg"
+            buttonText="Post Now"
           />
           <DashboardCard
-            title="Explore Listings"
-            description="Discover a curated selection of rooms tailored to your preferences."
-            icon={<Home size={28} className="text-white" />}
+            title="Browse Rooms"
+            description="Explore available rooms posted by others."
+            icon={<Home size={26} className="text-white" />}
             onClick={handleSearchRooms}
-            color="bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+            color="bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 dark:from-green-700 dark:to-teal-800 dark:hover:from-green-800 dark:hover:to-teal-900"
             image="https://th.bing.com/th/id/OIP.Zk_i0JGaL6O9vftz0aI9AQAAAA?rs=1&pid=ImgDetMain"
+            buttonText="Browse Now"
           />
           <DashboardCard
-            title="Manage Your Listings"
-            description="Keep track of your posted rooms and connect with interested individuals."
-            icon={<DoorOpen size={28} className="text-white" />}
+            title="My Posts"
+            description="View and manage your listed rooms."
+            icon={<DoorOpen size={26} className="text-white" />}
             onClick={handleMyRooms}
-            color="bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700"
+            color="bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 dark:from-yellow-700 dark:to-orange-800 dark:hover:from-yellow-800 dark:hover:to-orange-900"
             image="https://wallup.net/wp-content/uploads/2019/09/495651-interior-design-home-room-beautiful-arhitecture.jpg"
+            buttonText="View Posts"
           />
         </div>
       </main>
@@ -276,6 +269,7 @@ function DashboardCard({
   onClick,
   color,
   image,
+  buttonText,
 }: {
   title: string;
   description: string;
@@ -283,6 +277,7 @@ function DashboardCard({
   onClick: () => void;
   color: string;
   image: string;
+  buttonText: string;
 }) {
   return (
     <Card className="rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-transform hover:scale-105 duration-300 cursor-pointer group">
@@ -309,7 +304,7 @@ function DashboardCard({
           className={`w-full mt-4 rounded-xl text-white font-semibold py-3 shadow-lg ${color}`}
           onClick={onClick}
         >
-          Discover More
+          {buttonText}
         </Button>
       </CardContent>
     </Card>

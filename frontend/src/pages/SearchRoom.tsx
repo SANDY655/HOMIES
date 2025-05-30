@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { Wifi, Car, Home, CheckCircle, Snowflake } from "lucide-react";
+import {
+  Wifi,
+  Car,
+  Home,
+  CheckCircle,
+  Snowflake,
+  SunIcon, // Import SunIcon
+  MoonIcon, // Import MoonIcon
+} from "lucide-react";
 import { createRoute, Link, redirect, RootRoute } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
@@ -26,23 +34,17 @@ interface Room {
   };
 }
 
+// Function to apply or remove dark class on body based on theme
+const applyTheme = (theme: "light" | "dark") => {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+};
+
 function RoomCard({ room }: { room: Room }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [theme, setTheme] = useState<string>(
-    localStorage.getItem("theme") || "light"
-  );
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setTheme(localStorage.getItem("theme") || "light");
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -107,37 +109,20 @@ export function SearchRoom() {
   const [availableFrom, setAvailableFrom] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { ref, inView } = useInView();
-  const [theme, setTheme] = useState<string>(
-    localStorage.getItem("theme") || "light"
+  const [theme, setTheme] = useState<"light" | "dark">(
+    (localStorage.getItem("theme") as "light" | "dark") || "light"
   );
 
+  // Apply theme on initial load and when theme changes
   useEffect(() => {
-    const handleStorageChange = () => {
-      setTheme(localStorage.getItem("theme") || "light");
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    // Apply theme class to documentElement on initial load
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [theme]); // Dependency on theme ensures the effect reruns if theme state changes
-
-  // Apply theme class to documentElement on initial load and theme change
-  useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    applyTheme(theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
+
+  // Toggle between light and dark theme
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
 
   const fetchRooms = async ({ pageParam }: { pageParam: number }) => {
     const params = new URLSearchParams();
@@ -208,7 +193,8 @@ export function SearchRoom() {
   return (
     <div className="p-4 lg:p-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-4 mb-6 flex justify-start">
+        {/* Header with Dashboard Link and Theme Toggle */}
+        <div className="lg:col-span-4 mb-6 flex justify-between items-center">
           <Link
             to="/dashboard"
             className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-500 font-semibold px-4 py-2 border border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-800 transition"
@@ -217,7 +203,16 @@ export function SearchRoom() {
             <Home size={20} />
             Dashboard
           </Link>
+          {/* Theme Toggle Icon */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === "light" ? <MoonIcon size={20} /> : <SunIcon size={20} />}
+          </button>
         </div>
+
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 lg:sticky top-6 h-fit">
           <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
             Filters
@@ -292,7 +287,9 @@ export function SearchRoom() {
             Available Rooms
           </h1>
 
-          {data?.pages.flat().length === 0 ? (
+          {status === "pending" ? (
+            <p className="text-gray-500 dark:text-gray-400">Loading rooms...</p>
+          ) : data?.pages.flat().length === 0 ? (
             <div className="text-gray-500 dark:text-gray-400">
               No rooms found.
             </div>
