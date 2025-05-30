@@ -78,6 +78,7 @@ function useOutsideClick(
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
   const navigate = useNavigate();
+  const username = localStorage.getItem("username") || "User";
   const queryClient = useQueryClient();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -132,6 +133,7 @@ export function Dashboard() {
     localStorage.removeItem("token");
     localStorage.removeItem("email");
     localStorage.removeItem("userId");
+    localStorage.removeItem("username");
 
     queryClient.clear();
     navigate({ to: "/" });
@@ -148,19 +150,19 @@ export function Dashboard() {
   const handleSearchRooms = () => navigate({ to: "/search-rooms" });
   const handleMyRooms = () => navigate({ to: "/my-rooms" });
 
-   const goToProfile = () => {
-  setProfileMenuOpen(false);
-  const userId = localStorage.getItem("userId");
-  if (userId) {
-    navigate({ to: `/profile/${userId}` });
-  }
-};
+  const goToProfile = () => {
+    setProfileMenuOpen(false);
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      navigate({ to: `/profile/${userId}` });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
       <header className="bg-white dark:bg-gray-900 shadow px-6 py-3 flex items-center justify-between sticky top-0 z-40">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-          Dashboard
+          Welcome, {username}!
         </h1>
         <div className="flex items-center gap-4">
           <Button

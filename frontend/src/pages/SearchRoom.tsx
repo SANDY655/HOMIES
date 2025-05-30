@@ -28,6 +28,21 @@ interface Room {
 
 function RoomCard({ room }: { room: Room }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [theme, setTheme] = useState<string>(
+    localStorage.getItem("theme") || "light"
+  );
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setTheme(localStorage.getItem("theme") || "light");
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -45,7 +60,7 @@ function RoomCard({ room }: { room: Room }) {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
         whileHover={{ scale: 1.02 }}
-        className="bg-white rounded-xl shadow-lg border hover:shadow-xl overflow-hidden"
+        className="bg-white dark:bg-gray-700 rounded-xl shadow-lg border border-gray-100 dark:border-gray-600 hover:shadow-xl overflow-hidden"
       >
         <img
           src={
@@ -57,16 +72,22 @@ function RoomCard({ room }: { room: Room }) {
           className="w-full h-48 object-cover transition-opacity duration-500"
         />
         <div className="p-4">
-          <h3 className="text-lg font-semibold">{room.title}</h3>
-          <p className="text-sm text-gray-500">{room.location}</p>
-          <p className="text-blue-600 font-bold text-sm mt-1">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+            {room.title}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {room.location}
+          </p>
+          <p className="text-blue-600 dark:text-blue-400 font-bold text-sm mt-1">
             ₹{room.rent} / month
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Available: {format(new Date(room.availableFrom), "dd MMM yyyy")}
           </p>
-          <p className="text-xs capitalize text-gray-600">{room.roomType}</p>
-          <p className="text-xs mt-1 text-gray-500">
+          <p className="text-xs capitalize text-gray-600 dark:text-gray-300">
+            {room.roomType}
+          </p>
+          <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
             {Object.entries(room.amenities)
               .filter(([_, val]) => val)
               .map(([key]) => key)
@@ -86,6 +107,37 @@ export function SearchRoom() {
   const [availableFrom, setAvailableFrom] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { ref, inView } = useInView();
+  const [theme, setTheme] = useState<string>(
+    localStorage.getItem("theme") || "light"
+  );
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setTheme(localStorage.getItem("theme") || "light");
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Apply theme class to documentElement on initial load
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [theme]); // Dependency on theme ensures the effect reruns if theme state changes
+
+  // Apply theme class to documentElement on initial load and theme change
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
 
   const fetchRooms = async ({ pageParam }: { pageParam: number }) => {
     const params = new URLSearchParams();
@@ -140,7 +192,10 @@ export function SearchRoom() {
     }
   }, [inView, hasNextPage, fetchNextPage]);
 
-  if (status === "error") return <p>Error: {error.message}</p>;
+  if (status === "error")
+    return (
+      <p className="text-red-600 dark:text-red-400">Error: {error.message}</p>
+    );
 
   const toggleAmenity = (amenity: string) => {
     setAmenityFilters((prev) =>
@@ -151,25 +206,27 @@ export function SearchRoom() {
   };
 
   return (
-    <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 lg:p-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-4 gap-8">
         <div className="lg:col-span-4 mb-6 flex justify-start">
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold px-4 py-2 border border-blue-600 rounded-lg hover:bg-blue-50 transition"
+            className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-500 font-semibold px-4 py-2 border border-blue-600 dark:border-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-800 transition"
             aria-label="Go to Dashboard"
           >
             <Home size={20} />
             Dashboard
           </Link>
         </div>
-        <div className="bg-white rounded-2xl shadow p-4 lg:sticky top-6 h-fit">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Filters</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4 lg:sticky top-6 h-fit">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+            Filters
+          </h2>
 
           <input
             type="text"
             placeholder="Search by title or location..."
-            className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:border-blue-400"
+            className="w-full mb-3 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring focus:border-blue-400 dark:focus:border-blue-600"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -177,7 +234,7 @@ export function SearchRoom() {
           <select
             value={priceFilter}
             onChange={(e) => setPriceFilter(e.target.value)}
-            className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg"
+            className="w-full mb-3 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg"
           >
             <option value="all">All Prices</option>
             <option value="2500">Under ₹2500</option>
@@ -188,7 +245,7 @@ export function SearchRoom() {
           <select
             value={roomTypeFilter}
             onChange={(e) => setRoomTypeFilter(e.target.value)}
-            className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg"
+            className="w-full mb-3 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg"
           >
             <option value="all">All Room Types</option>
             <option value="single">Single</option>
@@ -198,12 +255,14 @@ export function SearchRoom() {
 
           <input
             type="date"
-            className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg"
+            className="w-full mb-3 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg"
             value={availableFrom}
             onChange={(e) => setAvailableFrom(e.target.value)}
           />
 
-          <div className="text-sm font-medium mb-2">Amenities:</div>
+          <div className="text-sm font-medium mb-2 text-gray-800 dark:text-white">
+            Amenities:
+          </div>
           <div className="flex flex-wrap gap-2">
             {[
               { key: "wifi", icon: <Wifi size={16} /> },
@@ -216,8 +275,8 @@ export function SearchRoom() {
                 key={key}
                 className={`text-xs px-3 py-1 rounded-full border flex items-center gap-1 ${
                   amenityFilters.includes(key)
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-100 text-gray-700"
+                    ? "bg-blue-600 text-white border-blue-600 dark:bg-blue-700 dark:border-blue-700"
+                    : "bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-200"
                 }`}
                 onClick={() => toggleAmenity(key)}
               >
@@ -229,12 +288,14 @@ export function SearchRoom() {
         </div>
 
         <div className="lg:col-span-3">
-          <h1 className="text-3xl font-bold mb-6 text-gray-800">
+          <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">
             Available Rooms
           </h1>
 
           {data?.pages.flat().length === 0 ? (
-            <div className="text-gray-500">No rooms found.</div>
+            <div className="text-gray-500 dark:text-gray-400">
+              No rooms found.
+            </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence>
@@ -254,10 +315,10 @@ export function SearchRoom() {
           onClick={() => fetchNextPage()}
           className={`px-6 py-2 text-white font-semibold rounded-lg ${
             isFetchingNextPage
-              ? "bg-gray-400"
+              ? "bg-gray-400 dark:bg-gray-600"
               : hasNextPage
-              ? "bg-blue-600 hover:bg-blue-700"
-              : "bg-gray-300 cursor-not-allowed"
+              ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+              : "bg-gray-300 dark:bg-gray-500 cursor-not-allowed"
           }`}
         >
           {isFetchingNextPage

@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast, Toaster } from "sonner";
 import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, ArrowLeft } from "lucide-react";
+import { Link } from "@tanstack/react-router"; // assuming react-router-like usage for Link
 
 export const Profile = () => {
   const [user, setUser] = useState<{
@@ -163,10 +164,23 @@ export const Profile = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
+    <div className="max-w-4xl mx-auto px-6 py-12">
+      {/* Back to Dashboard Navigation */}
+      <nav className="mb-8">
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
+          aria-label="Back to Dashboard"
+        >
+          <ArrowLeft className="mr-2 h-5 w-5" />
+          Back to Dashboard
+        </Link>
+      </nav>
+
+      {/* User Profile Card */}
       <Card className="shadow-lg rounded-lg border border-gray-200">
         <CardHeader>
-          <CardTitle className="text-3xl font-semibold text-gray-900">
+          <CardTitle className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
             User Profile
           </CardTitle>
           <CardDescription>Your account information</CardDescription>
@@ -194,7 +208,8 @@ export const Profile = () => {
                       !isUnique ||
                       isChecking
                     }
-                    className="text-green-600"
+                    className="text-green-600 hover:text-green-800"
+                    aria-label="Save username"
                   >
                     <Check />
                   </button>
@@ -203,7 +218,8 @@ export const Profile = () => {
                       setEditMode(false);
                       setNewUsername(user?.username || "");
                     }}
-                    className="text-red-600"
+                    className="text-red-600 hover:text-red-800"
+                    aria-label="Cancel username edit"
                   >
                     <X />
                   </button>
@@ -211,7 +227,8 @@ export const Profile = () => {
               ) : (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="text-blue-600"
+                  className="text-blue-600 hover:text-blue-800"
+                  aria-label="Edit username"
                 >
                   <Pencil />
                 </button>
@@ -222,15 +239,12 @@ export const Profile = () => {
             <Label>Email</Label>
             <Input value={user?.email || ""} disabled />
           </div>
-          <div>
-            <Label>User ID</Label>
-            <Input value={user?.userId || ""} disabled />
-          </div>
         </CardContent>
       </Card>
 
       <Separator className="my-10" />
 
+      {/* Change Password Card */}
       <Card>
         <CardHeader>
           <CardTitle>Change Password</CardTitle>

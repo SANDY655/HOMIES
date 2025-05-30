@@ -75,143 +75,142 @@ export function MyRooms() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6 md:px-12 lg:px-24">
-      <div className="max-w-5xl mx-auto">
-        {/* Header with title and dashboard navigation button */}
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-4xl font-extrabold text-gray-800">
-            My Posted Rooms
-          </h1>
+   <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 py-10 px-6 md:px-12 lg:px-24">
+  <div className="max-w-5xl mx-auto">
+    {/* Header */}
+    <div className="flex justify-between items-center mb-10">
+      <h1 className="text-4xl font-extrabold text-gray-800 dark:text-white">
+        My Posted Rooms
+      </h1>
 
-          {/* Dashboard Navigation Button */}
-          <Button
-            variant="outline"
-            className="flex items-center space-x-1"
-            onClick={() => navigate({ to: "/dashboard" })}
-            aria-label="Go to Dashboard"
-          >
-            <DashboardIcon />
-            <span>Dashboard</span>
-          </Button>
-        </div>
-
-        {isLoading ? (
-          <p className="text-gray-500 text-center">Loading your rooms...</p>
-        ) : isError ? (
-          <p className="text-red-500 text-center">
-            Failed to load rooms. Please try again.
-          </p>
-        ) : rooms?.length === 0 ? (
-          <p className="text-gray-600 text-center">
-            You haven't posted any rooms yet.
-          </p>
-        ) : (
-          <div className="grid gap-8 md:grid-cols-2">
-            {rooms.map((room) => (
-              <motion.div
-                key={room._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                <Card className="bg-white border border-gray-200 shadow-md rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <CardTitle className="text-2xl font-semibold text-gray-900 mb-2">
-                      {room.title}
-                    </CardTitle>
-                    <p className="text-gray-600 mb-4">{room.description}</p>
-                    <p className="text-gray-600 mb-1">
-                      <strong>Location:</strong> {room.location}
-                    </p>
-                    <p className="text-gray-600 mb-1">
-                      <strong>Rent:</strong> ₹
-                      {room.rent?.toLocaleString("en-IN")}
-                    </p>
-                    <p className="text-gray-600 mb-1">
-                      <strong>Deposit:</strong> ₹
-                      {room.deposit?.toLocaleString("en-IN")}
-                    </p>
-                    <p className="text-gray-600 mb-1">
-                      <strong>Available From:</strong>{" "}
-                      {new Date(room.availableFrom).toLocaleDateString()}
-                    </p>
-                    <p className="text-gray-600 mb-1">
-                      <strong>Room Type:</strong> {room.roomType}
-                    </p>
-
-                    <div className="mt-2 mb-2">
-                      <p className="font-semibold text-gray-700 mb-1">
-                        Amenities:
-                      </p>
-                      <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
-                        {Object.entries(room.amenities).map(([key, value]) =>
-                          value ? (
-                            <li key={key} className="capitalize">
-                              {key}
-                            </li>
-                          ) : null
-                        )}
-                      </ul>
-                    </div>
-
-                    {room.images?.length > 0 && (
-                      <div className="grid grid-cols-3 gap-2 mb-4">
-                        {room.images.map((img, idx) => (
-                          <img
-                            key={idx}
-                            src={img}
-                            alt={`Room image ${idx + 2}`}
-                            className="h-24 w-full object-cover rounded"
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="flex gap-3 mt-6">
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          navigate({ to: `/edit-room/${room._id}` })
-                        }
-                      >
-                        Edit
-                      </Button>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive">Delete</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Are you sure you want to delete this room?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteMutation.mutate(room._id)}
-                              disabled={deleteMutation.isLoading}
-                            >
-                              {deleteMutation.isLoading
-                                ? "Deleting..."
-                                : "Confirm Delete"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
+      <Button
+        variant="outline"
+        className="flex items-center space-x-1"
+        onClick={() => navigate({ to: "/dashboard" })}
+      >
+        <DashboardIcon />
+        <span>Dashboard</span>
+      </Button>
     </div>
+
+    {isLoading ? (
+      <p className="text-gray-500 dark:text-gray-300 text-center">
+        Loading your rooms...
+      </p>
+    ) : isError ? (
+      <p className="text-red-500 text-center">
+        Failed to load rooms. Please try again.
+      </p>
+    ) : rooms?.length === 0 ? (
+      <p className="text-gray-600 dark:text-gray-400 text-center">
+        You haven't posted any rooms yet.
+      </p>
+    ) : (
+      <div className="grid gap-8 md:grid-cols-2">
+        {rooms.map((room) => (
+          <motion.div
+            key={room._id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <Card className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-md dark:shadow-lg rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+              <CardContent className="p-6">
+                <CardTitle className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                  {room.title}
+                </CardTitle>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">{room.description}</p>
+                <p className="text-gray-600 dark:text-gray-300 mb-1">
+                  <strong>Location:</strong> {room.location}
+                </p>
+                <p className="text-gray-600 dark:text-gray-300 mb-1">
+                  <strong>Rent:</strong> ₹{room.rent?.toLocaleString("en-IN")}
+                </p>
+                <p className="text-gray-600 dark:text-gray-300 mb-1">
+                  <strong>Deposit:</strong> ₹{room.deposit?.toLocaleString("en-IN")}
+                </p>
+                <p className="text-gray-600 dark:text-gray-300 mb-1">
+                  <strong>Available From:</strong>{" "}
+                  {new Date(room.availableFrom).toLocaleDateString()}
+                </p>
+                <p className="text-gray-600 dark:text-gray-300 mb-1">
+                  <strong>Room Type:</strong> {room.roomType}
+                </p>
+
+                <div className="mt-2 mb-2">
+                  <p className="font-semibold text-gray-700 dark:text-gray-200 mb-1">
+                    Amenities:
+                  </p>
+                  <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 text-sm space-y-1">
+                    {Object.entries(room.amenities).map(([key, value]) =>
+                      value ? (
+                        <li key={key} className="capitalize">
+                          {key}
+                        </li>
+                      ) : null
+                    )}
+                  </ul>
+                </div>
+
+                {room.images?.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {room.images.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        alt={`Room image ${idx + 2}`}
+                        className="h-24 w-full object-cover rounded"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-3 mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      navigate({ to: `/edit-room/${room._id}` })
+                    }
+                  >
+                    Edit
+                  </Button>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you sure you want to delete this room?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteMutation.mutate(room._id)}
+                          disabled={deleteMutation.isLoading}
+                        >
+                          {deleteMutation.isLoading
+                            ? "Deleting..."
+                            : "Confirm Delete"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
   );
 }
 
