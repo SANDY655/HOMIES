@@ -208,7 +208,7 @@ export function Dashboard() {
                   className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-                  Toggle Theme
+                  {theme === "light" ? "Dark Mode" : "Light Mode"}
                 </button>
                 <div className="border-t border-gray-200 dark:border-gray-700"></div>
                 <button
@@ -233,11 +233,10 @@ export function Dashboard() {
       />
       <main className="relative z-30 max-w-6xl mx-auto px-6 py-12 text-center">
         <h2 className="text-4xl font-extrabold text-white mb-4 drop-shadow-lg">
-Your Next Stay, Just a Click Away.
+          Your Next Stay, Just a Click Away.
         </h2>
         <p className="text-lg text-gray-200 mb-12 drop-shadow">
-Explore Rooms, Flats, and PGs with Confidence.
-
+          Explore Rooms, Flats, and PGs with Confidence.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <DashboardCard
