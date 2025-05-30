@@ -44,18 +44,18 @@ function ConfirmLogout({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-          Confirm Logout
+          Confirm Session Termination
         </h3>
         <p className="mb-6 text-gray-600 dark:text-gray-300">
-          Are you sure you want to log out? You will need to log in again to
-          access your dashboard.
+          Are you certain you wish to end your session? Re-authentication will
+          be required to access your personalized dashboard.
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={onCancel}>
-            Cancel
+            Retain Session
           </Button>
           <Button variant="destructive" onClick={onConfirm}>
-            Logout
+            Terminate Session
           </Button>
         </div>
       </div>
@@ -82,7 +82,7 @@ function useOutsideClick(
 export function Dashboard() {
   const [email] = useState(JSON.parse(localStorage.getItem("email") || "{}"));
   const navigate = useNavigate();
-  const username = localStorage.getItem("username") || "User";
+  const username = localStorage.getItem("username") || "Valued Member";
   const queryClient = useQueryClient();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -129,7 +129,7 @@ export function Dashboard() {
         });
       }
     } catch {
-      console.warn("Logout API failed. Proceeding with local logout.");
+      console.warn("Logout API failed. Proceeding with local session clear.");
     }
 
     if (socket.connected) socket.disconnect();
@@ -172,7 +172,7 @@ export function Dashboard() {
 
       <header className="relative z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-lg px-6 py-4 flex items-center justify-between sticky top-0 rounded-b-lg">
         <h1 className="text-3xl font-extrabold text-gray-800 dark:text-gray-100 drop-shadow">
-          Welcome, {username}!
+          Greetings, {username}!
         </h1>
         <div className="flex items-center gap-6">
           <Button
@@ -181,7 +181,7 @@ export function Dashboard() {
             onClick={() => navigate({ to: "/chatwithsidebar" })}
           >
             <MessageSquare size={20} />
-            Chat
+            Engage in Chat
           </Button>
           <div className="relative" ref={profileMenuRef}>
             <button
@@ -201,14 +201,14 @@ export function Dashboard() {
                   className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   <User size={18} />
-                  Profile
+                  View Profile
                 </button>
                 <button
                   onClick={toggleTheme}
                   className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-                  {theme === "light" ? "Dark Mode" : "Light Mode"}
+                  Toggle Theme
                 </button>
                 <div className="border-t border-gray-200 dark:border-gray-700"></div>
                 <button
@@ -219,7 +219,7 @@ export function Dashboard() {
                   className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   <LogOut size={18} />
-                  Logout
+                  End Session
                 </button>
               </div>
             )}
@@ -233,35 +233,39 @@ export function Dashboard() {
       />
       <main className="relative z-30 max-w-6xl mx-auto px-6 py-12 text-center">
         <h2 className="text-4xl font-extrabold text-white mb-4 drop-shadow-lg">
-          Discover Your Ideal Rental Property.
+Your Next Stay, Just a Click Away.
         </h2>
         <p className="text-lg text-gray-200 mb-12 drop-shadow">
-          Connecting you with comfortable spaces and compatible people.
+Explore Rooms, Flats, and PGs with Confidence.
+
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <DashboardCard
-            title="List Your Space"
-            description="Easily showcase your available room to a community of potential roommates."
+            title="Present Your Residence"
+            description="Effortlessly feature your available room to a network of prospective tenants."
             icon={<Home size={28} className="text-white" />}
             onClick={handleRoomPosting}
             color="bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
             image="https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923__480.jpg"
+            buttonText="Showcase My Space"
           />
           <DashboardCard
-            title="Explore Listings"
-            description="Discover a curated selection of rooms tailored to your preferences."
+            title="Explore Available Properties"
+            description="Navigate through a curated collection of residences aligned with your criteria."
             icon={<Home size={28} className="text-white" />}
             onClick={handleSearchRooms}
             color="bg-gradient-to-br from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
             image="https://th.bing.com/th/id/OIP.Zk_i0JGaL6O9vftz0aI9AQAAAA?rs=1&pid=ImgDetMain"
+            buttonText="Browse Residences"
           />
           <DashboardCard
-            title="Manage Your Listings"
-            description="Keep track of your posted rooms and connect with interested individuals."
+            title="Oversee Your Portfolio"
+            description="Maintain oversight of your listed properties and engage with interested parties."
             icon={<DoorOpen size={28} className="text-white" />}
             onClick={handleMyRooms}
             color="bg-gradient-to-br from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700"
             image="https://wallup.net/wp-content/uploads/2019/09/495651-interior-design-home-room-beautiful-arhitecture.jpg"
+            buttonText="Administer Listings"
           />
         </div>
       </main>
@@ -276,6 +280,7 @@ function DashboardCard({
   onClick,
   color,
   image,
+  buttonText,
 }: {
   title: string;
   description: string;
@@ -283,6 +288,7 @@ function DashboardCard({
   onClick: () => void;
   color: string;
   image: string;
+  buttonText: string;
 }) {
   return (
     <Card className="rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-transform hover:scale-105 duration-300 cursor-pointer group">
@@ -309,7 +315,7 @@ function DashboardCard({
           className={`w-full mt-4 rounded-xl text-white font-semibold py-3 shadow-lg ${color}`}
           onClick={onClick}
         >
-          Discover More
+          {buttonText}
         </Button>
       </CardContent>
     </Card>
