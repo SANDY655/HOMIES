@@ -7,8 +7,13 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
   const currentUserId = getCurrentUserIdFromToken();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const messagesEndRef = useRef(null);
   const [roomTitle, setRoomTitle] = useState("Chat Room");
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    setIsDarkMode(localStorage.theme === "dark");
+  }, []);
 
   useEffect(() => {
     const fetchRoomInfo = async () => {
@@ -21,7 +26,6 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
         console.error("Failed to fetch chat room info:", error);
       }
     };
-
     fetchRoomInfo();
   }, [chatRoomId]);
 
@@ -29,7 +33,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
     const fetchMessages = async () => {
       try {
         const res = await axios.get(
-          ` http://localhost:5000/api/message/${chatRoomId}`
+          `http://localhost:5000/api/message/${chatRoomId}`
         );
         const formattedMessages = res.data.map((msg) => ({
           text: msg.content,
@@ -43,7 +47,6 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
         console.error("Error fetching messages:", err);
       }
     };
-
     fetchMessages();
   }, [chatRoomId]);
 
@@ -56,10 +59,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
       socket.connect();
     }
 
-    // socket.emit("joinRoom", chatRoomId);
-
     const handleMessage = (msg) => {
-      // Only add the message if it belongs to the current chat room
       if (msg.chatRoomId === chatRoomId) {
         const newMsg = {
           text: msg.message,
@@ -68,27 +68,23 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
           senderEmail: msg.senderEmail,
           timestamp: msg.timestamp,
         };
-
         setMessages((prev) => [...prev, newMsg]);
-        onMessageSent(msg); // Notify parent of new message
+        onMessageSent(msg);
       }
     };
 
     socket.on("receiveMessage", handleMessage);
-
     return () => {
-      // socket.emit("leaveRoom", chatRoomId);
       socket.off("receiveMessage", handleMessage);
     };
   }, [chatRoomId, onMessageSent]);
 
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
-
     const msg = {
       text: newMessage,
       senderId: currentUserId,
-      senderEmail: "Me", // We set 'Me' for the sender in the UI
+      senderEmail: "Me",
       timestamp: new Date().toISOString(),
     };
 
@@ -100,7 +96,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
 
     try {
       await axios.post("http://localhost:5000/api/message/save", {
-        chatRoomId: chatRoomId,
+        chatRoomId,
         senderId: currentUserId,
         content: newMessage,
       });
@@ -112,62 +108,78 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
     setNewMessage("");
   };
 
+  const containerClass = isDarkMode
+    ? "bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100"
+    : "bg-gradient-to-br from-slate-50 to-slate-200 text-slate-800";
+
+  const headerClass = isDarkMode
+    ? "bg-gradient-to-r from-purple-800 to-indigo-800 text-white"
+    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white";
+
+  const inputClass = isDarkMode
+    ? "bg-gray-700 text-white border-gray-600 focus:ring-indigo-400"
+    : "bg-white text-black border-slate-300 focus:ring-indigo-400";
+
+  const footerClass = isDarkMode ? "bg-gray-900 border-t border-gray-700" : "bg-white border-t";
+
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      {" "}
-      <header className="p-4 bg-indigo-600 text-white text-lg font-semibold shadow flex items-center justify-between">
-        <div>Chat Room</div>{" "}
-        <div className="p-2 text-white text-center font-medium">
-          Title: {roomTitle}
-        </div>{" "}
-      </header>{" "}
-      <main className="flex-1 overflow-y-auto px-4 py-2">
-        {" "}
+    <div className={`flex flex-col h-screen ${containerClass}`}>
+      <header className={`px-6 py-4 shadow-lg flex items-center justify-between ${headerClass}`}>
+        <h1 className="text-xl font-bold">💬 Chat Room</h1>
+        <span className="text-sm font-medium">Room: {roomTitle}</span>
+      </header>
+
+      <main className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
         {messages.length === 0 ? (
-          <p className="text-center text-gray-500 mt-10">No messages yet</p>
+          <p className="text-center text-gray-400 italic">No messages yet.</p>
         ) : (
-          <div className="space-y-2 flex flex-col">
-            {" "}
+          <div className="flex flex-col gap-4">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`p-2 rounded shadow w-fit max-w-[60%] ${
+                className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm transition-all duration-300 ${
                   msg.senderId === currentUserId
-                    ? "bg-indigo-200 self-end"
-                    : "bg-white self-start"
+                    ? isDarkMode
+                      ? "bg-indigo-700 self-end"
+                      : "bg-indigo-100 self-end"
+                    : isDarkMode
+                      ? "bg-gray-700 self-start"
+                      : "bg-white self-start"
                 }`}
               >
-                {" "}
-                <div className="text-sm font-semibold">
+                <div className="text-sm font-semibold mb-1">
                   {msg.senderId === currentUserId ? "You" : msg.senderName}
                 </div>
-                <div>{msg.text}</div>{" "}
-                <div className="text-xs text-gray-500">
-                  {new Date(msg.timestamp).toLocaleTimeString()}
-                </div>{" "}
+                <div className="text-base">{msg.text}</div>
+                <div className="text-xs text-gray-400 mt-1 text-right">
+                  {new Date(msg.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
               </div>
             ))}
-            <div ref={messagesEndRef} />{" "}
+            <div ref={messagesEndRef} />
           </div>
-        )}{" "}
-      </main>{" "}
-      <footer className="p-4 border-t bg-white flex gap-2">
-        {" "}
+        )}
+      </main>
+
+      <footer className={`p-4 shadow-inner flex items-center gap-2 ${footerClass}`}>
         <input
           type="text"
-          className="flex-1 border rounded px-3 py-2"
-          placeholder="Type your message..."
+          className={`flex-1 px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:border-transparent shadow-sm transition-all ${inputClass}`}
+          placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />{" "}
+        />
         <button
-          className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700"
           onClick={sendMessage}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-full shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
         >
-          Send{" "}
-        </button>{" "}
-      </footer>{" "}
+          Send
+        </button>
+      </footer>
     </div>
   );
 }
