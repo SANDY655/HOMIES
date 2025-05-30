@@ -34,7 +34,7 @@ io.on("connection", (socket) => {
 
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
-    console.log(`✅ User joined room: ${roomId}`);
+    console.log(` User joined room: ${roomId}`);
   });
 
   socket.on("sendMessage", async ({ roomId, message, sender }) => {
