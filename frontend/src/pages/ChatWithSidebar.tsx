@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
 import { ChatRoomPane } from "./ChatRoomPane";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, SunIcon, MoonIcon } from "lucide-react"; // Import icons
 
 interface Participant {
   _id: string;
@@ -34,32 +34,42 @@ interface ChatRoom {
   latestMessage?: LatestMessage;
 }
 
+// Function to apply or remove dark class on body based on theme
+const applyTheme = (theme: "light" | "dark") => {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+};
+
 export function ChatWithSidebar() {
   const currentUserId = getCurrentUserIdFromToken();
   const navigate = useNavigate();
   const { chatRoomId } = useSearch({ strict: false }) as {
     chatRoomId?: string;
   };
-  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([] as ChatRoom[]);
   const [selectedTab, setSelectedTab] = useState<
     "myChats" | "ownerChats" | undefined
   >(undefined);
   const [messagesByRoom, setMessagesByRoom] = useState<{
     [key: string]: any[];
   }>({});
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">(
+    (localStorage.getItem("theme") as "light" | "dark") || "light"
+  );
 
-  // Set dark mode class on HTML root
+  // Apply theme on initial load and when theme changes
   useEffect(() => {
-    const storedTheme = localStorage.getItem("theme") as
-      | "dark"
-      | "light"
-      | null;
-    const appliedTheme = storedTheme === "dark" ? "dark" : "light";
-    setTheme(appliedTheme);
-    document.documentElement.classList.remove("dark", "light");
-    document.documentElement.classList.add(appliedTheme);
-  }, []);
+    applyTheme(theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  // Toggle between light and dark theme
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -189,16 +199,26 @@ export function ChatWithSidebar() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       <aside className="w-80 border-r border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-300 dark:border-gray-700">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-300 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate({ to: "/dashboard", search: {} })}
+              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              <ArrowLeftIcon className="text-gray-900 dark:text-white" />
+            </button>
+            <h2 className="font-bold text-lg text-gray-900 dark:text-white">
+              Chats
+            </h2>
+          </div>
+          {/* Theme Toggle Icon */}
           <button
-            onClick={() => navigate({ to: "/dashboard", search: {} })}
-            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            aria-label="Toggle theme"
           >
-            <ArrowLeftIcon className="text-gray-900 dark:text-white" />
+            {theme === "light" ? <MoonIcon size={20} /> : <SunIcon size={20} />}
           </button>
-          <h2 className="font-bold text-lg text-gray-900 dark:text-white">
-            Chats
-          </h2>
         </div>
         <div className="flex justify-around border-b dark:border-gray-700">
           <button

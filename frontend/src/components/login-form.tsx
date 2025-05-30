@@ -8,8 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
 import { useState } from "react";
-import { createRoute, redirect } from "@tanstack/react-router";
-import { useRouter } from "@tanstack/react-router";
+import {
+  createRoute,
+  redirect,
+  RootRoute,
+  useRouter,
+} from "@tanstack/react-router";
 
 // Zod schema
 const loginSchema = z.object({
@@ -49,12 +53,10 @@ export function LoginForm({
         { withCredentials: true }
       );
 
-      // Expecting backend to return { token, user }
       const { token, user } = response.data;
-      console.log(user);
       localStorage.setItem("token", token);
-      localStorage.setItem("userId", user._id); // ✅ Fix: store from response
-      localStorage.setItem("email", JSON.stringify(user.email)); // ✅ Optional: or store full user object
+      localStorage.setItem("userId", user._id);
+      localStorage.setItem("email", JSON.stringify(user.email));
       localStorage.setItem("username", user.name);
       setMessage("Login Successful");
       const redirectTo = router.state.location.search.redirect ?? "/dashboard";
@@ -71,77 +73,72 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Welcome back</h1>
-                <p className="text-muted-foreground text-balance">
-                  Login to your HOMIES account
-                </p>
+    <div className={cn("flex justify-center p-4", className)} {...props}>
+      {" "}
+      {/* Removed min-h-screen, added padding */}
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6 md:p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
+            <div className="flex flex-col items-center text-center gap-2">
+              <h1 className="text-2xl font-bold">Welcome back</h1>
+              <p className="text-muted-foreground text-balance">
+                Login to your HOMIES account
+              </p>
+            </div>
+
+            <div className="grid gap-3">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                {...register("email")}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
+              )}
+            </div>
+
+            <div className="grid gap-3">
+              <div className="flex items-center">
+                <Label htmlFor="password">Password</Label>
               </div>
-
-              <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
-              </Button>
-
-              {message && (
-                <p
-                  className={`text-center text-sm ${
-                    message.includes("Success")
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  {message}
+              <Input
+                id="password"
+                type="password"
+                {...register("password")}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {errors.password && (
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
                 </p>
               )}
             </div>
-          </form>
 
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/img1.jpg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Logging in..." : "Login"}
+            </Button>
+
+            {message && (
+              <p
+                className={`text-center text-sm ${
+                  message.includes("Success")
+                    ? "text-green-500"
+                    : "text-red-500"
+                }`}
+              >
+                {message}
+              </p>
+            )}
+          </form>
         </CardContent>
       </Card>
     </div>
   );
 }
+
 export default (parentRoute: RootRoute) =>
   createRoute({
     path: "/login",

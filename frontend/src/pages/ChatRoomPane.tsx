@@ -120,11 +120,15 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
     ? "bg-gray-700 text-white border-gray-600 focus:ring-indigo-400"
     : "bg-white text-black border-slate-300 focus:ring-indigo-400";
 
-  const footerClass = isDarkMode ? "bg-gray-900 border-t border-gray-700" : "bg-white border-t";
+  const footerClass = isDarkMode
+    ? "bg-gray-900 border-t border-gray-700"
+    : "bg-white border-t";
 
   return (
     <div className={`flex flex-col h-screen ${containerClass}`}>
-      <header className={`px-6 py-4 shadow-lg flex items-center justify-between ${headerClass}`}>
+      <header
+        className={`px-6 py-4 shadow-lg flex items-center justify-between ${headerClass}`}
+      >
         <h1 className="text-xl font-bold">💬 Chat Room</h1>
         <span className="text-sm font-medium">Room: {roomTitle}</span>
       </header>
@@ -143,8 +147,8 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
                       ? "bg-indigo-700 self-end"
                       : "bg-indigo-100 self-end"
                     : isDarkMode
-                      ? "bg-gray-700 self-start"
-                      : "bg-white self-start"
+                    ? "bg-gray-700 self-start"
+                    : "bg-white self-start"
                 }`}
               >
                 <div className="text-sm font-semibold mb-1">
@@ -164,7 +168,9 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
         )}
       </main>
 
-      <footer className={`p-4 shadow-inner flex items-center gap-2 ${footerClass}`}>
+      <footer
+        className={`p-4 shadow-inner flex items-center gap-2 ${footerClass}`}
+      >
         <input
           type="text"
           className={`flex-1 px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:border-transparent shadow-sm transition-all ${inputClass}`}

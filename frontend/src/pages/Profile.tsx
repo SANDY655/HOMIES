@@ -12,8 +12,24 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast, Toaster } from "sonner";
 import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
-import { Pencil, Check, X, ArrowLeft } from "lucide-react";
+import {
+  Pencil,
+  Check,
+  X,
+  ArrowLeft,
+  SunIcon, // Import SunIcon for light mode
+  MoonIcon, // Import MoonIcon for dark mode
+} from "lucide-react";
 import { Link } from "@tanstack/react-router"; // assuming react-router-like usage for Link
+
+// Function to apply or remove dark class on body based on theme
+const applyTheme = (theme: "light" | "dark") => {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+};
 
 export const Profile = () => {
   const [user, setUser] = useState<{
@@ -34,6 +50,21 @@ export const Profile = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
+
+  const [theme, setTheme] = useState<"light" | "dark">(
+    (localStorage.getItem("theme") as "light" | "dark") || "light"
+  );
+
+  // Apply theme on initial load and when theme changes
+  useEffect(() => {
+    applyTheme(theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  // Toggle between light and dark theme
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
 
   useEffect(() => {
     const email = localStorage.getItem("email");
@@ -164,30 +195,44 @@ export const Profile = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="max-w-4xl mx-auto px-6 py-12 dark:bg-gray-900 dark:text-gray-100">
+      {/* Theme Toggle Icon */}
+      <div className="flex justify-between items-center mb-6">
+        <nav className="mb-8">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium dark:text-blue-400 dark:hover:text-blue-600"
+            aria-label="Back to Dashboard"
+          >
+            <ArrowLeft className="mr-2 h-5 w-5" />
+            Back to Dashboard
+          </Link>
+        </nav>
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === "light" ? <MoonIcon size={20} /> : <SunIcon size={20} />}
+          </button>
+        </div>
+      </div>
       {/* Back to Dashboard Navigation */}
-      <nav className="mb-8">
-        <Link
-          to="/dashboard"
-          className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
-          aria-label="Back to Dashboard"
-        >
-          <ArrowLeft className="mr-2 h-5 w-5" />
-          Back to Dashboard
-        </Link>
-      </nav>
 
       {/* User Profile Card */}
-      <Card className="shadow-lg rounded-lg border border-gray-200">
+      <Card className="shadow-lg rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
           <CardTitle className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
             User Profile
           </CardTitle>
-          <CardDescription>Your account information</CardDescription>
+          <CardDescription className="dark:text-gray-400">
+            Your account information
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
           <div>
-            <Label>Username</Label>
+            <Label className="dark:text-gray-300">Username</Label>
             <div className="flex items-center gap-2">
               <Input
                 value={editMode ? newUsername : user?.username || ""}
@@ -197,6 +242,7 @@ export const Profile = () => {
                   handleUsernameCheck(value);
                 }}
                 disabled={!editMode}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
               />
               {editMode ? (
                 <>
@@ -208,7 +254,7 @@ export const Profile = () => {
                       !isUnique ||
                       isChecking
                     }
-                    className="text-green-600 hover:text-green-800"
+                    className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Save username"
                   >
                     <Check />
@@ -217,8 +263,10 @@ export const Profile = () => {
                     onClick={() => {
                       setEditMode(false);
                       setNewUsername(user?.username || "");
+                      setIsUnique(false); // Reset unique check on cancel
+                      setIsChecking(false);
                     }}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600"
                     aria-label="Cancel username edit"
                   >
                     <X />
@@ -227,33 +275,52 @@ export const Profile = () => {
               ) : (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
                   aria-label="Edit username"
                 >
                   <Pencil />
                 </button>
               )}
             </div>
+            {editMode && newUsername && newUsername !== user?.username && (
+              <p
+                className={`text-sm mt-1 ${
+                  isUnique ? "text-green-600" : "text-red-600"
+                } dark:text-green-400 dark:text-red-400`}
+              >
+                {isChecking ? "Checking..." : isUnique ? "Available" : "Taken"}
+              </p>
+            )}
           </div>
           <div>
-            <Label>Email</Label>
-            <Input value={user?.email || ""} disabled />
+            <Label className="dark:text-gray-300">Email</Label>
+            <Input
+              value={user?.email || ""}
+              disabled
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
+            />
           </div>
+          {/* Empty div for layout spacing on larger screens */}
+          <div className="hidden md:block"></div>
         </CardContent>
       </Card>
 
-      <Separator className="my-10" />
+      <Separator className="my-10 dark:bg-gray-700" />
 
       {/* Change Password Card */}
-      <Card>
+      <Card className="shadow-lg rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Change Password</CardTitle>
-          <CardDescription>Update your password securely</CardDescription>
+          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            Change Password
+          </CardTitle>
+          <CardDescription className="dark:text-gray-400">
+            Update your password securely
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 py-6">
           <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
             <div className="flex-grow">
-              <Label>Current Password</Label>
+              <Label className="dark:text-gray-300">Current Password</Label>
               <Input
                 type="password"
                 value={currentPassword}
@@ -261,13 +328,14 @@ export const Profile = () => {
                   setCurrentPassword(e.target.value);
                   setIsVerified(false);
                 }}
-                disabled={isVerified}
+                disabled={isVerified || isVerifying || isChanging}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
               />
             </div>
             <Button
               onClick={handleVerifyCurrentPassword}
               disabled={isVerifying || !currentPassword || isVerified}
-              className="mt-4 md:mt-6"
+              className="mt-4 md:mt-6 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isVerifying
                 ? "Verifying..."
@@ -278,29 +346,37 @@ export const Profile = () => {
           </div>
 
           <div>
-            <Label>New Password</Label>
+            <Label className="dark:text-gray-300">New Password</Label>
             <Input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              disabled={!isVerified}
+              disabled={!isVerified || isChanging}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
             />
           </div>
 
           <div>
-            <Label>Retype New Password</Label>
+            <Label className="dark:text-gray-300">Retype New Password</Label>
             <Input
               type="password"
               value={retypePassword}
               onChange={(e) => setRetypePassword(e.target.value)}
-              disabled={!isVerified}
+              disabled={!isVerified || isChanging}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
             />
           </div>
 
           <Button
-            className="w-full"
+            className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleChangePassword}
-            disabled={isChanging}
+            disabled={
+              isChanging ||
+              !isVerified ||
+              !newPassword ||
+              !retypePassword ||
+              newPassword !== retypePassword
+            }
           >
             {isChanging ? "Changing..." : "Change Password"}
           </Button>

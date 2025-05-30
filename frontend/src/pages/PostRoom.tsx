@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { z } from "zod";
 import { ArrowBack, CheckCircleOutline } from "@mui/icons-material";
+
 import {
   createRoute,
   redirect,
@@ -26,6 +27,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { Autocomplete } from "@mui/material";
 import debounce from "lodash/debounce";
+import { Moon, Sun } from "lucide-react";
 
 // Define the steps
 const steps = ["Room Details", "Photos", "Amenities", "Review & Confirm"];
@@ -78,28 +80,37 @@ const defaultForm = {
   },
 };
 
+// Function to apply or remove dark class on documentElement based on theme
+const applyTheme = (theme: "light" | "dark") => {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+};
+
 export function PostRoom() {
   const navigate = useNavigate();
 
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(defaultForm);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({}); // Explicitly type errors
   const [loading, setLoading] = useState(false);
-  const [theme, setTheme] = useState<string>(
-    localStorage.getItem("theme") || "light"
+  const [theme, setTheme] = useState<"light" | "dark">(
+    (localStorage.getItem("theme") as "light" | "dark") || "light"
   );
 
-  // Listen for theme changes from localStorage
+  // Apply theme on initial load and when theme changes
   useEffect(() => {
-    const handleStorageChange = () => {
-      setTheme(localStorage.getItem("theme") || "light");
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
+    applyTheme(theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  // Toggle between light and dark theme
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -172,7 +183,7 @@ export function PostRoom() {
     const schema = stepSchemas[step];
     const result = schema.safeParse(form);
     if (!result.success) {
-      const fieldErrors = {};
+      const fieldErrors: { [key: string]: string } = {};
       result.error.errors.forEach((err) => {
         const field = err.path.join(".");
         fieldErrors[field] = err.message;
@@ -196,7 +207,7 @@ export function PostRoom() {
     setErrors({});
   };
 
-  const fetchLocationSuggestions = async (query) => {
+  const fetchLocationSuggestions = async (query: string) => {
     if (!query) {
       setLocationSuggestions([]);
       return;
@@ -230,7 +241,8 @@ export function PostRoom() {
   };
 
   const debouncedFetchLocationSuggestions = useCallback(
-    debounce((query) => {
+    debounce((query: string) => {
+      // Explicitly type query
       fetchLocationSuggestions(query);
     }, 500),
     []
@@ -266,7 +278,8 @@ export function PostRoom() {
       } else {
         alert("Something went wrong. Please try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Explicitly type error
       alert(`An error occurred: ${error.message}`);
     } finally {
       setLoading(false);
@@ -787,32 +800,54 @@ export function PostRoom() {
         p: 3,
       }}
     >
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "950px",
-          display: "flex",
-          justifyContent: "flex-start",
-          mb: 3,
-        }}
-      >
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate({ to: "/dashboard" })}
-          sx={{
-            mb: 3,
-            color: theme === "dark" ? "#bbb" : undefined,
-            borderColor: theme === "dark" ? "#555" : undefined,
-            "&:hover": {
-              borderColor: theme === "dark" ? "#777" : undefined,
-            },
-          }}
-          variant="outlined"
-        >
-          Back to Dashboard
-        </Button>
-      </Box>
+      {/* Theme Toggle Icon */}
 
+      <div className="flex justify-evenly items-center w-full mb-4">
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "950px",
+            display: "flex",
+            justifyContent: "flex-start",
+            mb: 3,
+          }}
+        >
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate({ to: "/dashboard" })}
+            sx={{
+              mb: 3,
+              color: theme === "dark" ? "#bbb" : undefined,
+              borderColor: theme === "dark" ? "#555" : undefined,
+              "&:hover": {
+                borderColor: theme === "dark" ? "#777" : undefined,
+              },
+            }}
+            variant="outlined"
+          >
+            Back to Dashboard
+          </Button>
+        </Box>
+
+        <Box sx={{ alignSelf: "flex-end", mb: 3 }}>
+          <Button
+            onClick={toggleTheme}
+            sx={{
+              p: 1,
+              minWidth: "auto",
+              borderRadius: "50%",
+              backgroundColor: theme === "dark" ? "#4a5568" : "#e2e8f0",
+              color: theme === "dark" ? "#e2e8f0" : "#2d3748",
+              "&:hover": {
+                backgroundColor: theme === "dark" ? "#6a7480" : "#cbd5e0",
+              },
+            }}
+            aria-label="Toggle theme"
+          >
+            {theme === "light" ? <Moon /> : <Sun />}
+          </Button>
+        </Box>
+      </div>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

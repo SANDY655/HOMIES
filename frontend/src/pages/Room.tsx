@@ -18,7 +18,7 @@ import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import "leaflet/dist/leaflet.css";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
-import { ArrowLeft } from "lucide-react"; // Import ArrowLeft icon
+import { ArrowLeft, SunIcon, MoonIcon } from "lucide-react"; // Import icons
 
 interface Room {
   _id: string;
@@ -41,6 +41,15 @@ interface Room {
   userId: string; // Assuming userId is available on the room object
 }
 
+// Function to apply or remove dark class on body based on theme
+const applyTheme = (theme: "light" | "dark") => {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+};
+
 export function Room() {
   const currentUserId = getCurrentUserIdFromToken();
   const { roomId } = useParams({ strict: false }) as { roomId: string };
@@ -56,37 +65,20 @@ export function Room() {
   } | null>(null);
   const [loadingCoords, setLoadingCoords] = useState(false);
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]); // Route polyline coords
-  const [theme, setTheme] = useState<string>(
-    localStorage.getItem("theme") || "light"
+  const [theme, setTheme] = useState<"light" | "dark">(
+    (localStorage.getItem("theme") as "light" | "dark") || "light"
   );
 
+  // Apply theme on initial load and when theme changes
   useEffect(() => {
-    const handleStorageChange = () => {
-      setTheme(localStorage.getItem("theme") || "light");
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    // Initial theme application based on localStorage
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [theme]); // Dependency on theme ensures the effect reruns if theme state changes
-
-  // Apply theme class to documentElement on initial load and theme change
-  useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    applyTheme(theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
+
+  // Toggle between light and dark theme
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
 
   // Fetch room details
   useEffect(() => {
@@ -246,8 +238,8 @@ export function Room() {
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-indigo-50 via-white to-indigo-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 px-6 py-12 md:px-20 lg:px-36">
-      {/* Back Navigation Link */}
-      <div className="mb-6 max-w-7xl mx-auto">
+      {/* Header with Back Navigation and Theme Toggle */}
+      <div className="mb-6 max-w-7xl mx-auto flex justify-between items-center">
         <Link
           to="/search-rooms" // Link back to the search rooms page
           className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition dark:text-gray-400 dark:hover:text-blue-400"
@@ -255,6 +247,14 @@ export function Room() {
           <ArrowLeft className="w-5 h-5" />
           Back
         </Link>
+        {/* Theme Toggle Icon */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === "light" ? <MoonIcon size={20} /> : <SunIcon size={20} />}
+        </button>
       </div>
 
       <div className="bg-white dark:bg-gray-700 rounded-3xl shadow-2xl overflow-hidden max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-14">
@@ -355,7 +355,11 @@ export function Room() {
               <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
                 Location Map
               </h2>
-              {loadingCoords && <p>Loading map...</p>}
+              {loadingCoords && (
+                <p className="text-gray-600 dark:text-gray-300">
+                  Loading map...
+                </p>
+              )}
               {!loadingCoords &&
               coordinates &&
               typeof coordinates.lat === "number" &&
@@ -371,7 +375,11 @@ export function Room() {
                   }}
                 >
                   <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    url={
+                      theme === "light"
+                        ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        : "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png"
+                    }
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   />
                   <Marker position={[coordinates.lat, coordinates.lon]}>
@@ -386,7 +394,7 @@ export function Room() {
                         <Polyline
                           positions={routeCoords}
                           pathOptions={{
-                            color: "blue",
+                            color: theme === "light" ? "blue" : "cyan",
                             weight: 5,
                             opacity: 0.8,
                           }}
@@ -405,13 +413,15 @@ export function Room() {
               )}
             </div>
 
-            <button
-              onClick={handleContactOwner}
-              className="w-full md:w-auto px-10 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-transform transform hover:scale-[1.05] dark:bg-indigo-700 dark:hover:bg-indigo-800 dark:focus:ring-indigo-800"
-              aria-label="Contact room owner"
-            >
-              Contact Owner
-            </button>
+            {room.userId !== currentUserId && ( // Only show if not the owner
+              <button
+                onClick={handleContactOwner}
+                className="w-full md:w-auto px-10 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-transform transform hover:scale-[1.05] dark:bg-indigo-700 dark:hover:bg-indigo-800 dark:focus:ring-indigo-800"
+                aria-label="Contact room owner"
+              >
+                Contact Owner
+              </button>
+            )}
           </div>
         </div>
       </div>

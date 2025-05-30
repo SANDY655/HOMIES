@@ -48,6 +48,7 @@ export function RegisterForm({
     handleSubmit,
     formState: { errors },
     watch,
+    trigger,
   } = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),
   });
@@ -58,8 +59,22 @@ export function RegisterForm({
   const [message, setMessage] = useState("");
 
   const sendOtp = async () => {
+    setMessage(""); // Clear previous messages
+
+    // Manually trigger validation for initial fields
+    const isValid = await trigger([
+      "name",
+      "email",
+      "password",
+      "confirmPassword",
+    ]);
+
+    if (!isValid) {
+      return;
+    }
+
     setLoading(true);
-    setMessage("");
+
     try {
       const { name, email, password, confirmPassword } = watch();
       const res = await axios.post(
@@ -87,6 +102,11 @@ export function RegisterForm({
   };
 
   const verifyOtp = async (data: RegisterSchema) => {
+    if (!data.otp) {
+      setMessage("Please enter the OTP.");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
     try {
@@ -100,9 +120,10 @@ export function RegisterForm({
       );
 
       setMessage(res.data.message || "Account verified and registered!");
+      // Corrected the navigate call with a single search object
       navigate({
         to: "/",
-        search: { modal: "login", search: { modal: "login" } },
+        search: { modal: "login" },
       });
     } catch (err: any) {
       if (axios.isAxiosError(err)) {
@@ -115,119 +136,129 @@ export function RegisterForm({
     }
   };
 
+  // Determine which submit handler to use based on otpSent state
+  const currentSubmitHandler = otpSent ? verifyOtp : sendOtp;
+
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/img1.jpg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
+    <div className={cn("flex justify-center", className)} {...props}>
+      <Card className="w-full max-w-md">
+        <CardContent className="p-6 md:p-8">
           <form
-            className="p-6 md:p-8"
-            onSubmit={handleSubmit(verifyOtp)}
+            onSubmit={handleSubmit(currentSubmitHandler)}
+            className="grid gap-6"
             noValidate
           >
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Welcome</h1>
-                <p className="text-muted-foreground">
-                  Register your HOMIES account
-                </p>
-              </div>
+            <div className="flex flex-col items-center text-center gap-2">
+              <h1 className="text-2xl font-bold">Welcome</h1>
+              <p className="text-muted-foreground text-balance">
+                Register your HOMIES account
+              </p>
+            </div>
 
-              {/* Name */}
-              <div className="grid gap-3">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Your name"
-                  {...register("name")}
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-500">{errors.name.message}</p>
-                )}
-              </div>
-
-              {/* Email */}
-              <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
-                )}
-              </div>
-
-              {/* Password */}
-              <div className="grid gap-3">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                />
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Confirm Password */}
-              <div className="grid gap-3">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  {...register("confirmPassword")}
-                />
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
-                    {errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Send OTP button */}
-              {!otpSent && (
-                <Button type="button" onClick={sendOtp} disabled={loading}>
-                  {loading ? "Sending OTP..." : "Get OTP"}
-                </Button>
+            {/* Name */}
+            <div className="grid gap-3">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                {...register("name")}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name.message}</p>
               )}
+            </div>
 
-              {/* OTP Input & Verify */}
-              {otpSent && (
-                <>
-                  <div className="grid gap-3">
-                    <Label htmlFor="otp">Enter OTP</Label>
-                    <Input
-                      id="otp"
-                      type="text"
-                      placeholder="Enter the OTP"
-                      {...register("otp")}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Verifying..." : "Verify OTP"}
-                  </Button>
-                </>
+            {/* Email */}
+            <div className="grid gap-3">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                {...register("email")}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
               )}
+            </div>
 
-              {message && (
-                <p className="text-center text-sm text-muted-foreground">
-                  {message}
+            {/* Password */}
+            <div className="grid gap-3">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                {...register("password")}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {errors.password && (
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
                 </p>
               )}
             </div>
+
+            {/* Confirm Password */}
+            <div className="grid gap-3">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                {...register("confirmPassword")}
+                className="dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-500">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+
+            {/* Send OTP button */}
+            {!otpSent && (
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Sending OTP..." : "Get OTP"}
+              </Button>
+            )}
+
+            {/* OTP Input & Verify */}
+            {otpSent && (
+              <>
+                <div className="grid gap-3">
+                  <Label htmlFor="otp">Enter OTP</Label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    placeholder="Enter the OTP"
+                    {...register("otp", { required: "OTP is required" })}
+                    className="dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {errors.otp && (
+                    <p className="text-sm text-red-500">{errors.otp.message}</p>
+                  )}
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Verifying..." : "Verify OTP"}
+                </Button>
+              </>
+            )}
+
+            {message && (
+              <p
+                className={`text-center text-sm ${
+                  message.includes("Success")
+                    ? "text-green-500"
+                    : message.includes("verified")
+                    ? "text-green-500"
+                    : "text-red-500"
+                }`}
+              >
+                {message}
+              </p>
+            )}
           </form>
         </CardContent>
       </Card>
