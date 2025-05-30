@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createRoute, RootRoute, redirect } from "@tanstack/react-router";
+import {
+  createRoute,
+  RootRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
 
 // Zod schema
 const registerSchema = z
@@ -46,6 +51,7 @@ export function RegisterForm({
   } = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),
   });
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -94,6 +100,10 @@ export function RegisterForm({
       );
 
       setMessage(res.data.message || "Account verified and registered!");
+      navigate({
+        to: "/",
+        search: { modal: "login", search: { modal: "login" } },
+      });
     } catch (err: any) {
       if (axios.isAxiosError(err)) {
         setMessage(err.response?.data?.message || "OTP verification failed");

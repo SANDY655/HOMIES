@@ -55,7 +55,7 @@ export function LoginForm({
       localStorage.setItem("token", token);
       localStorage.setItem("userId", user._id); // ✅ Fix: store from response
       localStorage.setItem("email", JSON.stringify(user.email)); // ✅ Optional: or store full user object
-      localStorage.setItem("username",user.name);
+      localStorage.setItem("username", user.name);
       setMessage("Login Successful");
       const redirectTo = router.state.location.search.redirect ?? "/dashboard";
       router.navigate({ to: redirectTo });
@@ -99,12 +99,6 @@ export function LoginForm({
               <div className="grid gap-3">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
                 </div>
                 <Input
                   id="password"
