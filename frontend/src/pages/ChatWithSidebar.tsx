@@ -275,6 +275,7 @@ export function ChatWithSidebar() {
           <ChatRoomPane
             chatRoomId={chatRoomId}
             onMessageSent={handleReceiveMessage}
+            theme={theme} // Pass the theme state to ChatRoomPane
           />
         )}
       </main>

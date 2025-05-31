@@ -825,7 +825,7 @@ export function PostRoom() {
             }}
             variant="outlined"
           >
-            Back to Dashboard
+            Back
           </Button>
         </Box>
 

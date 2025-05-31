@@ -207,7 +207,7 @@ export const Profile = () => {
             aria-label="Back to Dashboard"
           >
             <ArrowLeft className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="hidden sm:inline">Back</span>
             <span className="inline sm:hidden">Dashboard</span>
           </Link>
 
@@ -350,8 +350,8 @@ export const Profile = () => {
             </CardHeader>
             <CardContent className="space-y-4 py-0 flex-grow flex flex-col justify-between">
               <div className="space-y-4">
-                <div className="flex flex-col md:flex-row md:items-start md:space-x-4">
-                  <div className="flex-grow w-full">
+                <div className="flex flex-col md:flex-row md:items-end md:space-x-4">
+                  <div className="flex-grow">
                     <Label
                       htmlFor="current-password"
                       className="text-sm dark:text-gray-300"
@@ -370,17 +370,19 @@ export const Profile = () => {
                       className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400 text-sm"
                     />
                   </div>
-                  <Button
-                    onClick={handleVerifyCurrentPassword}
-                    disabled={isVerifying || !currentPassword || isVerified}
-                    className="mt-2 md:mt-0 shrink-0 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm py-2 px-3 h-auto"
-                  >
-                    {isVerifying
-                      ? "Verifying..."
-                      : isVerified
-                      ? "Verified"
-                      : "Verify"}
-                  </Button>
+                  <div className="mt-2 md:mt-0">
+                    <Button
+                      onClick={handleVerifyCurrentPassword}
+                      disabled={isVerifying || !currentPassword || isVerified}
+                      className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm py-2 px-3 h-auto"
+                    >
+                      {isVerifying
+                        ? "Verifying..."
+                        : isVerified
+                        ? "Verified"
+                        : "Verify"}
+                    </Button>
+                  </div>
                 </div>
 
                 <div>
@@ -419,7 +421,7 @@ export const Profile = () => {
               </div>
 
               <Button
-                className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm py-2 px-4"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm py-2 px-4"
                 onClick={handleChangePassword}
                 disabled={
                   isChanging ||

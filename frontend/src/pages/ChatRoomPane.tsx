@@ -3,17 +3,13 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
 
-export function ChatRoomPane({ chatRoomId, onMessageSent }) {
+export function ChatRoomPane({ chatRoomId, onMessageSent, theme }) {
+  // Receive theme as a prop
   const currentUserId = getCurrentUserIdFromToken();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [roomTitle, setRoomTitle] = useState("Chat Room");
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const messagesEndRef = useRef(null);
-
-  useEffect(() => {
-    setIsDarkMode(localStorage.theme === "dark");
-  }, []);
 
   useEffect(() => {
     const fetchRoomInfo = async () => {
@@ -108,21 +104,25 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
     setNewMessage("");
   };
 
-  const containerClass = isDarkMode
-    ? "bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100"
-    : "bg-gradient-to-br from-slate-50 to-slate-200 text-slate-800";
+  const containerClass =
+    theme === "dark"
+      ? "bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100"
+      : "bg-gradient-to-br from-slate-50 to-slate-200 text-slate-800";
 
-  const headerClass = isDarkMode
-    ? "bg-gradient-to-r from-purple-800 to-indigo-800 text-white"
-    : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white";
+  const headerClass =
+    theme === "dark"
+      ? "bg-gradient-to-r from-purple-800 to-indigo-800 text-white"
+      : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white";
 
-  const inputClass = isDarkMode
-    ? "bg-gray-700 text-white border-gray-600 focus:ring-indigo-400"
-    : "bg-white text-black border-slate-300 focus:ring-indigo-400";
+  const inputClass =
+    theme === "dark"
+      ? "bg-gray-700 text-white border-gray-600 focus:ring-indigo-400"
+      : "bg-white text-black border-slate-300 focus:ring-indigo-400";
 
-  const footerClass = isDarkMode
-    ? "bg-gray-900 border-t border-gray-700"
-    : "bg-white border-t";
+  const footerClass =
+    theme === "dark"
+      ? "bg-gray-900 border-t border-gray-700"
+      : "bg-white border-t";
 
   return (
     <div className={`flex flex-col h-screen ${containerClass}`}>
@@ -143,10 +143,10 @@ export function ChatRoomPane({ chatRoomId, onMessageSent }) {
                 key={idx}
                 className={`max-w-[70%] px-4 py-3 rounded-2xl shadow-sm transition-all duration-300 ${
                   msg.senderId === currentUserId
-                    ? isDarkMode
+                    ? theme === "dark"
                       ? "bg-indigo-700 self-end"
                       : "bg-indigo-100 self-end"
-                    : isDarkMode
+                    : theme === "dark"
                     ? "bg-gray-700 self-start"
                     : "bg-white self-start"
                 }`}
