@@ -6,13 +6,19 @@ import {
   FaUserPlus,
   FaTimes,
   FaHome,
-  FaSun, // Import sun icon for light mode
-  FaMoon, // Import moon icon for dark mode
 } from "react-icons/fa";
 import { LoginForm } from "./components/login-form";
 import { RegisterForm } from "./components/register-form";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Wifi, Car, Home, CheckCircle, Snowflake } from "lucide-react";
+import {
+  Wifi,
+  Car,
+  Home,
+  CheckCircle,
+  Snowflake,
+  Moon,
+  Sun,
+} from "lucide-react";
 
 // Function to apply or remove dark class on body based on theme
 const applyTheme = (theme: "light" | "dark") => {
@@ -34,7 +40,7 @@ function Modal({ open, onClose, children }) {
         className="fixed inset-0 z-40 transition-opacity bg-white/20 backdrop-blur-xs dark:bg-gray-900/20"
       />
       <div className="fixed inset-0 flex items-center justify-center z-50 p-6">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-auto p-8 relative animate-fadeIn scale-up dark:bg-gray-800 dark:text-white">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-auto p-8 relative animate-fadeIn scale-up dark:bg-black dark:text-white">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-3xl dark:text-gray-500 dark:hover:text-gray-300"
@@ -256,7 +262,7 @@ function App() {
             className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             aria-label="Toggle theme"
           >
-            {theme === "light" ? <FaMoon size={20} /> : <FaSun size={20} />}
+            {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </button>
           <Dropdown onSelect={(type) => setModalType(type)} />
         </div>

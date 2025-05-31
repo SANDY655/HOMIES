@@ -4,7 +4,6 @@ import axios from "axios";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
 
 export function ChatRoomPane({ chatRoomId, onMessageSent, theme }) {
-  // Receive theme as a prop
   const currentUserId = getCurrentUserIdFromToken();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");

@@ -76,7 +76,7 @@ export function LoginForm({
     <div className={cn("flex justify-center p-4", className)} {...props}>
       {" "}
       {/* Removed min-h-screen, added padding */}
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-none">
         <CardContent className="p-6 md:p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
             <div className="flex flex-col items-center text-center gap-2">

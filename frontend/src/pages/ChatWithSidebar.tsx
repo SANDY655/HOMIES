@@ -10,7 +10,13 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
 import { ChatRoomPane } from "./ChatRoomPane";
-import { ArrowLeftIcon, SunIcon, MoonIcon } from "lucide-react"; // Import icons
+import {
+  ArrowLeftIcon,
+  MenuIcon,
+  XIcon,
+  SunIcon,
+  MoonIcon,
+} from "lucide-react";
 
 interface Participant {
   _id: string;
@@ -34,7 +40,6 @@ interface ChatRoom {
   latestMessage?: LatestMessage;
 }
 
-// Function to apply or remove dark class on body based on theme
 const applyTheme = (theme: "light" | "dark") => {
   if (theme === "dark") {
     document.documentElement.classList.add("dark");
@@ -49,31 +54,28 @@ export function ChatWithSidebar() {
   const { chatRoomId } = useSearch({ strict: false }) as {
     chatRoomId?: string;
   };
-  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([] as ChatRoom[]);
-  const [selectedTab, setSelectedTab] = useState<
-    "myChats" | "ownerChats" | undefined
-  >(undefined);
+
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const [selectedTab, setSelectedTab] = useState<"myChats" | "ownerChats">();
   const [messagesByRoom, setMessagesByRoom] = useState<{
     [key: string]: any[];
   }>({});
   const [theme, setTheme] = useState<"light" | "dark">(
     (localStorage.getItem("theme") as "light" | "dark") || "light"
   );
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-  // Apply theme on initial load and when theme changes
   useEffect(() => {
     applyTheme(theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Toggle between light and dark theme
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   useEffect(() => {
     if (!currentUserId) return;
-
     const fetchChatRooms = async () => {
       try {
         const res = await axios.get<ChatRoom[]>(
@@ -85,13 +87,12 @@ export function ChatWithSidebar() {
           if (!socket.connected) socket.connect();
           socket.emit("joinRoom", room._id);
         });
-      } catch (error) {
-        console.error("Failed to fetch chat rooms:", error);
+      } catch (err) {
+        console.error("Error fetching chatrooms:", err);
       }
     };
 
     fetchChatRooms();
-
     return () => {
       chatRooms.forEach((room) => {
         socket.emit("leaveRoom", room._id);
@@ -100,7 +101,7 @@ export function ChatWithSidebar() {
     };
   }, [currentUserId]);
 
-  const handleReceiveMessage = useCallback((msg) => {
+  const handleReceiveMessage = useCallback((msg: any) => {
     setMessagesByRoom((prev) => {
       const updated = { ...prev };
       updated[msg.chatRoomId] = [
@@ -174,6 +175,7 @@ export function ChatWithSidebar() {
           key={room._id}
           onClick={() => {
             navigate({ search: (prev) => ({ ...prev, chatRoomId: room._id }) });
+            setSidebarOpen(false); // Close sidebar on mobile after selecting
           }}
           className={`cursor-pointer p-3 border-none rounded hover:bg-indigo-100 dark:hover:bg-indigo-800 ${
             room._id === chatRoomId
@@ -197,8 +199,21 @@ export function ChatWithSidebar() {
     });
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-      <aside className="w-80 border-r border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col">
+    <div className="flex h-screen overflow-hidden relative bg-gray-50 dark:bg-gray-900">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm bg-white/30 dark:bg-gray-900/30 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed z-40 md:static top-0 left-0 h-full w-72 md:w-80 transform bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
+      >
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-300 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <button
@@ -211,14 +226,25 @@ export function ChatWithSidebar() {
               Chats
             </h2>
           </div>
-          {/* Theme Toggle Icon */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-            aria-label="Toggle theme"
-          >
-            {theme === "light" ? <MoonIcon size={20} /> : <SunIcon size={20} />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "light" ? (
+                <MoonIcon size={20} />
+              ) : (
+                <SunIcon size={20} />
+              )}
+            </button>
+            <button
+              className="md:hidden text-gray-800 dark:text-white"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <XIcon />
+            </button>
+          </div>
         </div>
         <div className="flex justify-around border-b dark:border-gray-700">
           <button
@@ -266,16 +292,26 @@ export function ChatWithSidebar() {
           </ul>
         </div>
       </aside>
-      <main className="flex-1 flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+
+      {/* Main Chat Area */}
+      <main className="flex-1 flex flex-col z-0 relative bg-white dark:bg-gray-900">
+        <div className="md:hidden absolute top-4 left-4 z-10">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+          >
+            <MenuIcon />
+          </button>
+        </div>
         {!chatRoomId ? (
-          <div className="flex items-center justify-center flex-grow text-gray-500 dark:text-gray-400">
-            Start a chat by selecting a chat room from the sidebar
+          <div className="flex items-center justify-center flex-grow text-gray-500 dark:text-gray-400 px-4 text-center">
+            Start a chat by selecting a chat room from the sidebar...
           </div>
         ) : (
           <ChatRoomPane
             chatRoomId={chatRoomId}
             onMessageSent={handleReceiveMessage}
-            theme={theme} // Pass the theme state to ChatRoomPane
+            theme={theme}
           />
         )}
       </main>
