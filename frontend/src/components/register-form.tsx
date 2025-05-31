@@ -141,7 +141,7 @@ export function RegisterForm({
 
   return (
     <div className={cn("flex justify-center", className)} {...props}>
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-none">
         <CardContent className="p-6 md:p-8">
           <form
             onSubmit={handleSubmit(currentSubmitHandler)}

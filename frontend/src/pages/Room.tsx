@@ -237,7 +237,7 @@ export function Room() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-tr items-center from-indigo-50 via-white to-indigo-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 px-6 py-6 md:px-20 lg:px-36 overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-tr items-center from-indigo-50 via-white to-indigo-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 px-6 py-6 md:px-20 lg:px-36">
       {/* Header with Back Navigation and Theme Toggle */}
       <div className="mb-4 max-w-7xl mx-auto flex justify-between items-center w-full">
         <Link
