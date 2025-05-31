@@ -21,6 +21,7 @@ import {
   MoonIcon, // Import MoonIcon for dark mode
 } from "lucide-react";
 import { Link } from "@tanstack/react-router"; // assuming react-router-like usage for Link
+import { motion } from "framer-motion"; // Import motion for animations
 
 // Function to apply or remove dark class on body based on theme
 const applyTheme = (theme: "light" | "dark") => {
@@ -195,193 +196,245 @@ export const Profile = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 dark:bg-gray-900 dark:text-gray-100">
-      {/* Theme Toggle Icon */}
-      <div className="flex justify-between items-center mb-6">
-        <nav className="mb-8">
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-900 py-6 px-4 sm:px-6 lg:px-8 overflow-y-auto">
+      <div className="max-w-3xl mx-auto w-full flex-grow flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          {/* Back to Dashboard Navigation */}
           <Link
             to="/dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium dark:text-blue-400 dark:hover:text-blue-600"
+            className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium dark:text-blue-400 dark:hover:text-blue-600 transition-colors text-sm sm:text-base"
             aria-label="Back to Dashboard"
           >
-            <ArrowLeft className="mr-2 h-5 w-5" />
-            Back to Dashboard
+            <ArrowLeft className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="inline sm:hidden">Dashboard</span>
           </Link>
-        </nav>
-        <div className="flex justify-end mb-6">
+
+          {/* Theme Toggle Icon */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            className="p-1 sm:p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-zinc-900 dark:focus:ring-gray-400"
             aria-label="Toggle theme"
           >
-            {theme === "light" ? <MoonIcon size={20} /> : <SunIcon size={20} />}
+            {theme === "light" ? (
+              <MoonIcon size={16} className="sm:size-5" />
+            ) : (
+              <SunIcon size={16} className="sm:size-5" />
+            )}
           </button>
         </div>
-      </div>
-      {/* Back to Dashboard Navigation */}
 
-      {/* User Profile Card */}
-      <Card className="shadow-lg rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
-            User Profile
-          </CardTitle>
-          <CardDescription className="dark:text-gray-400">
-            Your account information
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
-          <div>
-            <Label className="dark:text-gray-300">Username</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                value={editMode ? newUsername : user?.username || ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setNewUsername(value);
-                  handleUsernameCheck(value);
-                }}
-                disabled={!editMode}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
-              />
-              {editMode ? (
-                <>
-                  <button
-                    onClick={handleUsernameSave}
-                    disabled={
-                      !newUsername ||
-                      newUsername === user?.username ||
-                      !isUnique ||
-                      isChecking
-                    }
-                    className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Save username"
-                  >
-                    <Check />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditMode(false);
-                      setNewUsername(user?.username || "");
-                      setIsUnique(false); // Reset unique check on cancel
-                      setIsChecking(false);
-                    }}
-                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-600"
-                    aria-label="Cancel username edit"
-                  >
-                    <X />
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setEditMode(true)}
-                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-600"
-                  aria-label="Edit username"
+        {/* User Profile Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex-shrink-0 mb-6"
+        >
+          <Card className="shadow-lg rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                User Profile
+              </CardTitle>
+              <CardDescription className="text-sm dark:text-gray-400">
+                Your account information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div>
+                <Label
+                  htmlFor="username"
+                  className="text-sm dark:text-gray-300"
                 >
-                  <Pencil />
-                </button>
-              )}
-            </div>
-            {editMode && newUsername && newUsername !== user?.username && (
-              <p
-                className={`text-sm mt-1 ${
-                  isUnique ? "text-green-600" : "text-red-600"
-                } dark:text-green-400 dark:text-red-400`}
+                  Username
+                </Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    id="username"
+                    value={editMode ? newUsername : user?.username || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNewUsername(value);
+                      handleUsernameCheck(value);
+                    }}
+                    disabled={!editMode}
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400 text-sm"
+                  />
+                  {editMode ? (
+                    <>
+                      <button
+                        onClick={handleUsernameSave}
+                        disabled={
+                          !newUsername ||
+                          newUsername === user?.username ||
+                          !isUnique ||
+                          isChecking
+                        }
+                        className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-green-600 dark:text-green-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Save username"
+                      >
+                        <Check size={16} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditMode(false);
+                          setNewUsername(user?.username || "");
+                          setIsUnique(false); // Reset unique check on cancel
+                          setIsChecking(false);
+                        }}
+                        className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 transition-colors"
+                        aria-label="Cancel username edit"
+                      >
+                        <X size={16} />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setEditMode(true)}
+                      className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-blue-600 dark:text-blue-400 transition-colors"
+                      aria-label="Edit username"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                  )}
+                </div>
+                {editMode && newUsername && newUsername !== user?.username && (
+                  <p
+                    className={`text-xs mt-1 ${
+                      isUnique
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {isChecking
+                      ? "Checking..."
+                      : isUnique
+                      ? "Available"
+                      : "Taken"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="email" className="text-sm dark:text-gray-300">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  value={user?.email || ""}
+                  disabled
+                  className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <Separator className="my-6 dark:bg-gray-700 flex-shrink-0" />
+
+        {/* Change Password Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex-grow" // Allow this card to grow
+        >
+          <Card className="shadow-lg rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-full flex flex-col">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Change Password
+              </CardTitle>
+              <CardDescription className="text-sm dark:text-gray-400">
+                Update your password securely
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 py-0 flex-grow flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex flex-col md:flex-row md:items-start md:space-x-4">
+                  <div className="flex-grow w-full">
+                    <Label
+                      htmlFor="current-password"
+                      className="text-sm dark:text-gray-300"
+                    >
+                      Current Password
+                    </Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => {
+                        setCurrentPassword(e.target.value);
+                        setIsVerified(false);
+                      }}
+                      disabled={isVerified || isVerifying || isChanging}
+                      className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400 text-sm"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleVerifyCurrentPassword}
+                    disabled={isVerifying || !currentPassword || isVerified}
+                    className="mt-2 md:mt-0 shrink-0 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm py-2 px-3 h-auto"
+                  >
+                    {isVerifying
+                      ? "Verifying..."
+                      : isVerified
+                      ? "Verified"
+                      : "Verify"}
+                  </Button>
+                </div>
+
+                <div>
+                  <Label
+                    htmlFor="new-password"
+                    className="text-sm dark:text-gray-300"
+                  >
+                    New Password
+                  </Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={!isVerified || isChanging}
+                    className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <Label
+                    htmlFor="retype-password"
+                    className="text-sm dark:text-gray-300"
+                  >
+                    Retype New Password
+                  </Label>
+                  <Input
+                    id="retype-password"
+                    type="password"
+                    value={retypePassword}
+                    onChange={(e) => setRetypePassword(e.target.value)}
+                    disabled={!isVerified || isChanging}
+                    className="mt-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400 text-sm"
+                  />
+                </div>
+              </div>
+
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm py-2 px-4"
+                onClick={handleChangePassword}
+                disabled={
+                  isChanging ||
+                  !isVerified ||
+                  !newPassword ||
+                  !retypePassword ||
+                  newPassword !== retypePassword
+                }
               >
-                {isChecking ? "Checking..." : isUnique ? "Available" : "Taken"}
-              </p>
-            )}
-          </div>
-          <div>
-            <Label className="dark:text-gray-300">Email</Label>
-            <Input
-              value={user?.email || ""}
-              disabled
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
-            />
-          </div>
-          {/* Empty div for layout spacing on larger screens */}
-          <div className="hidden md:block"></div>
-        </CardContent>
-      </Card>
-
-      <Separator className="my-10 dark:bg-gray-700" />
-
-      {/* Change Password Card */}
-      <Card className="shadow-lg rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            Change Password
-          </CardTitle>
-          <CardDescription className="dark:text-gray-400">
-            Update your password securely
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6 py-6">
-          <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
-            <div className="flex-grow">
-              <Label className="dark:text-gray-300">Current Password</Label>
-              <Input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => {
-                  setCurrentPassword(e.target.value);
-                  setIsVerified(false);
-                }}
-                disabled={isVerified || isVerifying || isChanging}
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
-              />
-            </div>
-            <Button
-              onClick={handleVerifyCurrentPassword}
-              disabled={isVerifying || !currentPassword || isVerified}
-              className="mt-4 md:mt-6 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isVerifying
-                ? "Verifying..."
-                : isVerified
-                ? "Verified"
-                : "Verify"}
-            </Button>
-          </div>
-
-          <div>
-            <Label className="dark:text-gray-300">New Password</Label>
-            <Input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={!isVerified || isChanging}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
-            />
-          </div>
-
-          <div>
-            <Label className="dark:text-gray-300">Retype New Password</Label>
-            <Input
-              type="password"
-              value={retypePassword}
-              onChange={(e) => setRetypePassword(e.target.value)}
-              disabled={!isVerified || isChanging}
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
-            />
-          </div>
-
-          <Button
-            className="w-full bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleChangePassword}
-            disabled={
-              isChanging ||
-              !isVerified ||
-              !newPassword ||
-              !retypePassword ||
-              newPassword !== retypePassword
-            }
-          >
-            {isChanging ? "Changing..." : "Change Password"}
-          </Button>
-        </CardContent>
-      </Card>
+                {isChanging ? "Changing..." : "Change Password"}
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
 
       <Toaster richColors position="top-right" closeButton />
     </div>

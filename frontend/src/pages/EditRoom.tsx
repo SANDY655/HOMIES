@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { createRoute, redirect, type RootRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sun, Moon } from "lucide-react"; // Import Sun and Moon icons
 
 // Assuming you have these types or similar defined elsewhere
 interface Room {
@@ -54,12 +54,14 @@ export function EditRoom() {
     localStorage.getItem("theme") || "light"
   );
 
+  // Effect to sync theme with localStorage and apply class to document element
   useEffect(() => {
     const handleStorageChange = () => {
       setTheme(localStorage.getItem("theme") || "light");
     };
     window.addEventListener("storage", handleStorageChange);
-    // Apply theme class to documentElement on initial load
+
+    // Apply theme class on mount
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
@@ -71,14 +73,16 @@ export function EditRoom() {
     };
   }, [theme]); // Dependency on theme ensures the effect reruns if theme state changes
 
-  // Apply theme class to documentElement on initial load and theme change
-  useEffect(() => {
-    if (theme === "dark") {
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    if (newTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, [theme]);
+  };
 
   const {
     data: room,
@@ -206,7 +210,7 @@ export function EditRoom() {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
@@ -235,23 +239,41 @@ export function EditRoom() {
   }
 
   return (
-    <div className="min-h-screen py-10 px-6 md:px-12 lg:px-24 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
+    <div className="min-h-screen py-4 px-4 md:py-6 md:px-8 lg:px-12 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       <div className="max-w-3xl mx-auto">
-        {/* 🔙 Back Navigation */}
-        <button
-          onClick={() => navigate({ to: "/my-rooms" })}
-          className="mb-6 flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition dark:text-gray-400 dark:hover:text-blue-400"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to My Rooms
-        </button>
+        {/* Header with Back Navigation and Theme Toggle */}
+        <div className="flex justify-between items-center mb-4">
+          {" "}
+          {/* Reduced margin */}
+          <button
+            onClick={() => navigate({ to: "/my-rooms" })}
+            className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-blue-600 transition dark:text-gray-400 dark:hover:text-blue-400"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to My Rooms
+          </button>
+          {/* Theme Toggle Icon */}
+          <button
+            onClick={toggleTheme}
+            className="p-1 rounded-full text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            title={
+              theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"
+            }
+          >
+            {theme === "light" ? (
+              <Moon className="w-5 h-5" />
+            ) : (
+              <Sun className="w-5 h-5" />
+            )}
+          </button>
+        </div>
 
-        <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
           Edit Room
         </h1>
 
         <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-          <CardContent className="p-6 space-y-6">
+          <CardContent className="p-4 space-y-4">
             {/* Basic fields */}
             {[
               "title",
@@ -264,7 +286,7 @@ export function EditRoom() {
               <div key={field}>
                 <Label
                   htmlFor={field}
-                  className="text-gray-700 dark:text-gray-300"
+                  className="text-gray-700 dark:text-gray-300 text-sm"
                 >
                   {field.charAt(0).toUpperCase() + field.slice(1)}
                 </Label>
@@ -273,28 +295,28 @@ export function EditRoom() {
                   name={field}
                   value={formData[field as keyof typeof formData]} // Type assertion
                   onChange={handleChange}
-                  className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
+                  className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 text-sm h-8"
                 />
               </div>
             ))}
 
             {/* Amenities checkboxes */}
             <div>
-              <Label className="block mb-2 text-gray-700 dark:text-gray-300">
+              <Label className="block mb-1 text-gray-700 dark:text-gray-300 text-sm">
                 Amenities
               </Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1">
                 {Object.entries(formData.amenities).map(([key, value]) => (
                   <label
                     key={key}
-                    className="flex items-center gap-2 capitalize text-gray-700 dark:text-gray-300"
+                    className="flex items-center gap-1 capitalize text-gray-700 dark:text-gray-300 text-sm"
                   >
                     <input
                       type="checkbox"
                       name={key}
                       checked={value}
                       onChange={handleAmenityChange}
-                      className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out dark:text-blue-400"
+                      className="form-checkbox h-3 w-3 text-blue-600 transition duration-150 ease-in-out dark:text-blue-400"
                     />
                     {key}
                   </label>
@@ -303,8 +325,8 @@ export function EditRoom() {
             </div>
 
             {/* Upload new images */}
-            <div className="mt-4">
-              <Label className="block mb-2 text-gray-700 dark:text-gray-300">
+            <div className="mt-2">
+              <Label className="block mb-1 text-gray-700 dark:text-gray-300 text-sm">
                 Upload New Images
               </Label>
               <Input
@@ -312,28 +334,28 @@ export function EditRoom() {
                 accept="image/*"
                 multiple
                 onChange={(e) => handleImageUpload([...e.target.files!])} // Use non-null assertion
-                className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 file:dark:text-gray-200"
+                className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 file:dark:text-gray-200 text-sm h-8"
               />
             </div>
 
             {/* Preview images */}
             {formData.images?.length > 0 && (
               <div>
-                <Label className="block mb-2 text-gray-700 dark:text-gray-300">
+                <Label className="block mb-1 text-gray-700 dark:text-gray-300 text-sm">
                   Room Images
                 </Label>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2">
                   {formData.images.map((img, idx) => (
                     <div key={idx} className="relative group">
                       <img
                         src={img}
                         alt={`Room image ${idx + 1}`}
-                        className="h-24 w-full object-cover rounded"
+                        className="h-16 w-full object-cover rounded"
                       />
                       <button
                         onClick={() => handleDeleteImage(img)}
                         title="Delete image"
-                        className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity dark:bg-red-700"
+                        className="absolute top-0.5 right-0.5 bg-red-600 text-white rounded-full p-0.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity dark:bg-red-700"
                         type="button"
                       >
                         ✕
@@ -348,12 +370,12 @@ export function EditRoom() {
             <Button
               onClick={() => updateMutation.mutate(formData)}
               disabled={updateMutation.isPending || isLoading} // Disable if loading room or updating
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white disabled:bg-gray-400 dark:disabled:bg-gray-600"
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white disabled:bg-gray-400 dark:disabled:bg-gray-600 text-sm h-8"
             >
               {updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
             {updateMutation.isError && (
-              <p className="text-red-600 dark:text-red-400">
+              <p className="text-red-600 dark:text-red-400 text-sm mt-1">
                 Error saving changes.
               </p>
             )}

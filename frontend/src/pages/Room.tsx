@@ -237,9 +237,9 @@ export function Room() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-indigo-50 via-white to-indigo-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 px-6 py-12 md:px-20 lg:px-36">
+    <div className="h-screen flex flex-col bg-gradient-to-tr items-center from-indigo-50 via-white to-indigo-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 px-6 py-6 md:px-20 lg:px-36 overflow-hidden">
       {/* Header with Back Navigation and Theme Toggle */}
-      <div className="mb-6 max-w-7xl mx-auto flex justify-between items-center">
+      <div className="mb-4 max-w-7xl mx-auto flex justify-between items-center w-full">
         <Link
           to="/search-rooms" // Link back to the search rooms page
           className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition dark:text-gray-400 dark:hover:text-blue-400"
@@ -257,8 +257,8 @@ export function Room() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-700 rounded-3xl shadow-2xl overflow-hidden max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-14">
-        <div className="h-96 lg:h-auto rounded-l-3xl overflow-hidden shadow-inner border-r border-gray-100 dark:border-gray-600">
+      <div className="flex-grow bg-white items-center justify-center dark:bg-gray-700 rounded-3xl shadow-2xl overflow-hidden max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="h-full rounded-l-3xl overflow-hidden shadow-inner border-r border-gray-100 dark:border-gray-600">
           {room.images.length > 0 ? (
             <Carousel
               showThumbs={true}
@@ -268,17 +268,20 @@ export function Room() {
               autoPlay={false}
               dynamicHeight={false}
               emulateTouch
-              className="rounded-l-3xl"
+              className="rounded-l-3xl h-full flex flex-col"
               thumbWidth={80}
               thumbHeight={56}
               swipeScrollTolerance={5}
             >
               {room.images.map((url, index) => (
-                <div key={index} className="h-96 lg:h-auto">
+                <div
+                  key={index}
+                  className="h-full flex justify-center items-center"
+                >
                   <img
                     src={url}
                     alt={`Room image ${index + 1}`}
-                    className="object-cover w-full h-96 lg:h-auto"
+                    className="object-cover w-full h-full"
                     loading="lazy"
                   />
                 </div>
@@ -288,34 +291,34 @@ export function Room() {
             <img
               src="https://via.placeholder.com/800x600"
               alt="Placeholder"
-              className="w-full h-96 object-cover rounded-l-3xl"
+              className="w-full h-full object-cover rounded-l-3xl"
             />
           )}
         </div>
 
-        <div className="p-12 flex flex-col justify-between">
+        <div className="p-8 flex flex-col justify-between overflow-y-auto no-scrollbar">
           <div>
-            <h1 className="text-5xl font-extrabold text-gray-900 dark:text-white mb-5 tracking-tight drop-shadow-sm">
+            <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-3 tracking-tight drop-shadow-sm">
               {room.title}
             </h1>
-            <p className="text-indigo-600 dark:text-indigo-400 text-lg font-semibold mb-6 tracking-wide">
+            <p className="text-indigo-600 dark:text-indigo-400 text-base font-semibold mb-4 tracking-wide">
               {room.location}
             </p>
-            <div className="flex items-baseline space-x-3 mb-5">
-              <span className="text-4xl font-extrabold text-indigo-700 dark:text-indigo-300 drop-shadow">
+            <div className="flex items-baseline space-x-2 mb-3">
+              <span className="text-3xl font-extrabold text-indigo-700 dark:text-indigo-300 drop-shadow">
                 ₹{room.rent.toLocaleString("en-IN")}
               </span>
-              <span className="text-lg font-semibold text-gray-600 dark:text-gray-300">
+              <span className="text-base font-semibold text-gray-600 dark:text-gray-300">
                 / month
               </span>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 font-medium mb-12">
+            <p className="text-gray-600 dark:text-gray-300 font-medium mb-2">
               Deposit: ₹{room.deposit.toLocaleString("en-IN")}
             </p>
-            <p className="text-gray-800 dark:text-gray-200 leading-relaxed mb-14 whitespace-pre-line">
+            <p className="text-gray-800 dark:text-gray-200 leading-relaxed mb-4 text-sm whitespace-pre-line">
               {room.description}
             </p>
-            <div className="space-y-4 text-gray-700 dark:text-gray-300 text-sm">
+            <div className="space-y-2 text-gray-700 dark:text-gray-300 text-xs">
               <p>
                 <span className="font-semibold text-gray-800 dark:text-gray-200">
                   Available From:
@@ -346,17 +349,17 @@ export function Room() {
             </div>
           </div>
 
-          <div className="mt-16 pt-10 border-t border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm flex flex-col items-start gap-4">
-            <p className="mb-1 font-medium">
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm flex flex-col items-start gap-3">
+            <p className="mb-0 font-medium text-xs">
               Posted by: <span className="font-normal">{room.email}</span>
             </p>
 
-            <div className="mt-12 w-full">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
+            <div className="mt-4 w-full">
+              <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">
                 Location Map
               </h2>
               {loadingCoords && (
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
                   Loading map...
                 </p>
               )}
@@ -369,8 +372,8 @@ export function Room() {
                   zoom={13}
                   scrollWheelZoom={false}
                   style={{
-                    height: "300px",
-                    borderRadius: "1rem",
+                    height: "200px",
+                    borderRadius: "0.75rem",
                     width: "100%",
                   }}
                 >
@@ -406,7 +409,7 @@ export function Room() {
               ) : (
                 !loadingCoords &&
                 !coordinates && (
-                  <p className="text-gray-600 dark:text-gray-300">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm">
                     Location not found on map.
                   </p>
                 )
@@ -416,7 +419,7 @@ export function Room() {
             {room.userId !== currentUserId && ( // Only show if not the owner
               <button
                 onClick={handleContactOwner}
-                className="w-full md:w-auto px-10 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-transform transform hover:scale-[1.05] dark:bg-indigo-700 dark:hover:bg-indigo-800 dark:focus:ring-indigo-800"
+                className="w-full md:w-auto px-8 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-300 transition-transform transform hover:scale-[1.03] dark:bg-indigo-700 dark:hover:bg-indigo-800 dark:focus:ring-indigo-800 text-sm"
                 aria-label="Contact room owner"
               >
                 Contact Owner
