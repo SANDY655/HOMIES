@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "@tanstack/react-router";
 import { SunIcon, MoonIcon } from "lucide-react"; // Import icons
+import { Skeleton } from "@/components/ui/skeleton"; // Assuming you have a Skeleton component
 
 // Function to apply or remove dark class on body based on theme
 const applyTheme = (theme: "light" | "dark") => {
@@ -46,6 +47,27 @@ function DashboardIcon() {
     </svg>
   );
 }
+
+// Skeleton loader component
+const RoomCardSkeleton = () => (
+  <Card className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-md dark:shadow-lg rounded-2xl overflow-hidden">
+    <CardContent className="p-6">
+      <Skeleton className="h-6 w-3/4 mb-2" />
+      <Skeleton className="h-4 w-full mb-4" />
+      <Skeleton className="h-4 w-1/2 mb-1" />
+      <Skeleton className="h-4 w-1/3 mb-1" />
+      <Skeleton className="h-4 w-2/5 mb-1" />
+      <Skeleton className="h-4 w-1/2 mb-1" />
+      <Skeleton className="h-4 w-1/4 mb-1" />
+      <Skeleton className="h-4 w-1/3 mb-2" />
+      <Skeleton className="h-16 w-full mb-4" />
+      <div className="flex gap-3 mt-6">
+        <Skeleton className="h-10 w-20" />
+        <Skeleton className="h-10 w-24" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export function MyRooms() {
   const userId = localStorage.getItem("userId");
@@ -101,11 +123,11 @@ export function MyRooms() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 py-10 px-6 md:px-12 lg:px-24">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-4xl font-extrabold text-gray-800 dark:text-white">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-10">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 dark:text-white mb-4 sm:mb-0 text-center sm:text-left">
             My Posted Rooms
           </h1>
 
@@ -113,7 +135,7 @@ export function MyRooms() {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-zinc-900 dark:focus:ring-gray-400"
               aria-label="Toggle theme"
             >
               {theme === "light" ? (
@@ -125,123 +147,149 @@ export function MyRooms() {
 
             <Button
               variant="outline"
-              className="flex items-center space-x-1"
+              className="flex items-center space-x-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               onClick={() => navigate({ to: "/dashboard" })}
             >
               <DashboardIcon />
-              <span>Dashboard</span>
+              <span className="hidden sm:inline">Dashboard</span>
             </Button>
           </div>
         </div>
 
         {isLoading ? (
-          <p className="text-gray-500 dark:text-gray-300 text-center">
-            Loading your rooms...
-          </p>
+          <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            <RoomCardSkeleton />
+            <RoomCardSkeleton />
+            <RoomCardSkeleton />
+          </div>
         ) : isError ? (
-          <p className="text-red-500 text-center">
+          <p className="text-red-500 text-center text-lg">
             Failed to load rooms. Please try again.
           </p>
         ) : rooms?.length === 0 ? (
-          <p className="text-gray-600 dark:text-gray-400 text-center">
-            You haven't posted any rooms yet.
-          </p>
+          <div className="flex flex-col items-center justify-center h-60">
+            <p className="text-gray-600 dark:text-gray-400 text-center text-xl mb-4">
+              You haven't posted any rooms yet.
+            </p>
+            <Button
+              onClick={() => navigate({ to: "/post-room" })}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
+              Post Your First Room
+            </Button>
+          </div>
         ) : (
-          <div className="grid gap-8 md:grid-cols-2">
-            {rooms.map((room) => (
+          <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {rooms.map((room: any) => (
               <motion.div
                 key={room._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
+                className="flex flex-col h-full" // Ensure cards take full height
               >
-                <Card className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-md dark:shadow-lg rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <CardTitle className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+                <Card className="flex flex-col h-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-md dark:shadow-lg rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+                  <CardContent className="flex flex-col flex-grow p-6">
+                    <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white mb-2 truncate">
                       {room.title}
                     </CardTitle>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
                       {room.description}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-1">
-                      <strong>Location:</strong> {room.location}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-1">
-                      <strong>Rent:</strong> ₹
-                      {room.rent?.toLocaleString("en-IN")}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-1">
-                      <strong>Deposit:</strong> ₹
-                      {room.deposit?.toLocaleString("en-IN")}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-1">
-                      <strong>Available From:</strong>{" "}
-                      {new Date(room.availableFrom).toLocaleDateString()}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-1">
-                      <strong>Room Type:</strong> {room.roomType}
-                    </p>
-
-                    <div className="mt-2 mb-2">
-                      <p className="font-semibold text-gray-700 dark:text-gray-200 mb-1">
-                        Amenities:
+                    <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300 flex-grow">
+                      <p>
+                        <strong>Location:</strong> {room.location}
                       </p>
-                      <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 text-sm space-y-1">
-                        {Object.entries(room.amenities).map(([key, value]) =>
-                          value ? (
-                            <li key={key} className="capitalize">
-                              {key}
-                            </li>
-                          ) : null
-                        )}
-                      </ul>
+                      <p>
+                        <strong>Rent:</strong> ₹
+                        {room.rent?.toLocaleString("en-IN")}
+                      </p>
+                      <p>
+                        <strong>Deposit:</strong> ₹
+                        {room.deposit?.toLocaleString("en-IN")}
+                      </p>
+                      <p>
+                        <strong>Available From:</strong>{" "}
+                        {new Date(room.availableFrom).toLocaleDateString()}
+                      </p>
+                      <p>
+                        <strong>Room Type:</strong> {room.roomType}
+                      </p>
                     </div>
 
-                    {room.images?.length > 0 && (
-                      <div className="grid grid-cols-3 gap-2 mb-4">
-                        {room.images.map((img, idx) => (
-                          <img
-                            key={idx}
-                            src={img}
-                            alt={`Room image ${idx + 2}`}
-                            className="h-24 w-full object-cover rounded"
-                          />
-                        ))}
+                    {Object.values(room.amenities).some((val) => val) && (
+                      <div className="mt-4">
+                        <p className="font-semibold text-gray-700 dark:text-gray-200 mb-1 text-sm">
+                          Amenities:
+                        </p>
+                        <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 text-xs space-y-1 grid grid-cols-2 gap-1">
+                          {Object.entries(room.amenities).map(([key, value]) =>
+                            value ? (
+                              <li key={key} className="capitalize truncate">
+                                {key.replace(/([A-Z])/g, " $1").trim()}
+                              </li>
+                            ) : null
+                          )}
+                        </ul>
                       </div>
                     )}
 
-                    <div className="flex gap-3 mt-6">
+                    {/* Display all images */}
+                    {room.images?.length > 0 && (
+                      <div className="mt-4">
+                        <p className="font-semibold text-gray-700 dark:text-gray-200 mb-2 text-sm">
+                          Images:
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                          {room.images.map((img: string, idx: number) => (
+                            <img
+                              key={idx}
+                              src={img}
+                              alt={`Room image ${idx + 1}`}
+                              className="h-20 w-full object-cover rounded-md"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-3 mt-6">
                       <Button
                         variant="outline"
                         onClick={() =>
                           navigate({ to: `/edit-room/${room._id}` })
                         }
-                        className="dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+                        className="w-full sm:flex-1 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
                       >
                         Edit
                       </Button>
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive">Delete</Button>
+                          <Button
+                            variant="destructive"
+                            className="w-full sm:flex-1"
+                          >
+                            Delete
+                          </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="dark:bg-zinc-800 dark:text-white">
+                        <AlertDialogContent className="dark:bg-zinc-800 dark:text-white rounded-lg">
                           <AlertDialogHeader>
-                            <AlertDialogTitle className="dark:text-white">
+                            <AlertDialogTitle className="text-lg font-semibold dark:text-white">
                               Are you sure you want to delete this room?
                             </AlertDialogTitle>
-                            <AlertDialogDescription className="dark:text-gray-400">
+                            <AlertDialogDescription className="text-gray-600 dark:text-gray-400 text-sm">
                               This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
+                          <AlertDialogFooter className="flex-col sm:flex-row sm:justify-end gap-2">
+                            <AlertDialogCancel className="w-full sm:w-auto dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
                               Cancel
                             </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => deleteMutation.mutate(room._id)}
                               disabled={deleteMutation.isLoading}
-                              className="dark:bg-red-600 dark:hover:bg-red-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {deleteMutation.isLoading
                                 ? "Deleting..."
