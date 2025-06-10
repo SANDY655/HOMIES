@@ -114,6 +114,7 @@ export function ChatWithSidebar() {
         },
       ];
       return updated;
+      console.log(messagesByRoom);
     });
 
     setChatRooms((prev) => {
@@ -175,7 +176,6 @@ export function ChatWithSidebar() {
           key={room._id}
           onClick={() => {
             navigate({ search: { chatRoomId: room._id } as any });
-
             setSidebarOpen(false); // Close sidebar on mobile after selecting
           }}
           className={`cursor-pointer p-3 border-none rounded hover:bg-indigo-100 dark:hover:bg-indigo-800 ${

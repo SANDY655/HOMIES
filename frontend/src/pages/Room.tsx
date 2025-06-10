@@ -1,6 +1,6 @@
 import {
   createRoute,
-  redirect,
+  
   RootRoute,
   useNavigate,
   Link, // Import Link from tanstack/react-router

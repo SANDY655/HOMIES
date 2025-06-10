@@ -386,13 +386,13 @@ export function PostRoom() {
                 }
                 filterOptions={(x) => x}
                 inputValue={form.location}
-                onInputChange={(event, newInputValue, reason) => {
+                onInputChange={(_, newInputValue, reason) => {
                   if (reason === "input") {
                     setForm((prev) => ({ ...prev, location: newInputValue }));
                     debouncedFetchLocationSuggestions(newInputValue);
                   }
                 }}
-                onChange={(event, newValue) => {
+                onChange={(_, newValue) => {
                   if (newValue && typeof newValue !== "string") {
                     setForm((prev) => ({
                       ...prev,

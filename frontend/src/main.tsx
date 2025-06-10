@@ -5,7 +5,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 

@@ -1,5 +1,5 @@
 // Avatar.tsx
-import { FC } from "react";
+import type { FC } from "react";
 
 interface AvatarProps {
   src?: string;
