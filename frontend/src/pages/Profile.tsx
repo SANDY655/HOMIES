@@ -86,11 +86,14 @@ export const Profile = () => {
 
     setIsChecking(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/user/check-username`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: name }),
-      });
+      const res = await fetch(
+        `https://homies-oqpt.onrender.com/api/user/check-username`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: name }),
+        }
+      );
       const data = await res.json();
 
       setIsUnique(data.available);
@@ -110,7 +113,7 @@ export const Profile = () => {
     try {
       const cleanEmail = user?.email.replace(/^"|"$/g, "");
       const response = await fetch(
-        "http://localhost:5000/api/user/update-username",
+        "https://homies-oqpt.onrender.com/api/user/update-username",
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -138,7 +141,7 @@ export const Profile = () => {
     try {
       const cleanEmail = user?.email.replace(/^"|"$/g, "");
       const response = await fetch(
-        "http://localhost:5000/api/user/verify-password",
+        "https://homies-oqpt.onrender.com/api/user/verify-password",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -171,7 +174,7 @@ export const Profile = () => {
     try {
       const cleanEmail = user?.email.replace(/^"|"$/g, "");
       const response = await fetch(
-        "http://localhost:5000/api/user/change-password",
+        "https://homies-oqpt.onrender.com/api/user/change-password",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

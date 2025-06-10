@@ -34,7 +34,7 @@ export function handleAutoLogout(navigate: (opts: { to: string }) => void) {
   
 
   if (token) {
-    fetch("http://localhost:5000/api/user/logout", {
+    fetch("https://homies-oqpt.onrender.com/api/user/logout", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

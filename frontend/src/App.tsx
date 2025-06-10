@@ -155,11 +155,15 @@ type Room = {
 
 function App() {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { modal?: "login" | "register" };
+  const search = useSearch({ strict: false }) as {
+    modal?: "login" | "register";
+  };
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalType, setModalType] = useState<"login" | "register" | null>(null);
-  const [imageIndexes, setImageIndexes] = useState<{ [roomId: string]: number }>({});
+  const [imageIndexes, setImageIndexes] = useState<{
+    [roomId: string]: number;
+  }>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [priceFilter, setPriceFilter] = useState("all");
   const [roomTypeFilter, setRoomTypeFilter] = useState("all");
@@ -210,7 +214,7 @@ function App() {
       amenityFilters.forEach((amenity) => params.append("amenities", amenity));
 
       const res = await fetch(
-        `http://localhost:5000/api/room/all?${params.toString()}`
+        `https://homies-oqpt.onrender.com/api/room/all?${params.toString()}`
       );
       const data = await res.json();
 
@@ -280,7 +284,9 @@ function App() {
           >
             {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </button>
-          <Dropdown onSelect={(type) => setModalType(type as "login" | "register")} />
+          <Dropdown
+            onSelect={(type) => setModalType(type as "login" | "register")}
+          />
         </div>
       </header>
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">

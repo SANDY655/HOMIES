@@ -96,7 +96,9 @@ export function MyRooms() {
   } = useQuery({
     queryKey: ["myRooms", userId],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:5000/api/room/user/${userId}`);
+      const res = await fetch(
+        `https://homies-oqpt.onrender.com/api/room/user/${userId}`
+      );
       const data = await res.json();
       if (!data.success)
         throw new Error(data.message || "Failed to fetch rooms");
@@ -107,9 +109,12 @@ export function MyRooms() {
 
   const deleteMutation = useMutation({
     mutationFn: async (roomId: string) => {
-      const res = await fetch(`http://localhost:5000/api/room/${roomId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `https://homies-oqpt.onrender.com/api/room/${roomId}`,
+        {
+          method: "DELETE",
+        }
+      );
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Delete failed");
       return data;

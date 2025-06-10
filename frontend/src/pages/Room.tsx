@@ -1,11 +1,16 @@
 import {
   createRoute,
-  
   RootRoute,
   useNavigate,
   Link, // Import Link from tanstack/react-router
 } from "@tanstack/react-router";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+} from "react-leaflet";
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Carousel } from "react-responsive-carousel";
@@ -78,7 +83,9 @@ export function Room() {
   useEffect(() => {
     const fetchRoom = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/room/${roomId}`);
+        const res = await fetch(
+          `https://homies-oqpt.onrender.com/api/room/${roomId}`
+        );
         const data = await res.json();
         if (data.success) {
           setRoom(data.data);
@@ -204,7 +211,7 @@ export function Room() {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/chatroom/createOrGet",
+        "https://homies-oqpt.onrender.com/api/chatroom/createOrGet",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

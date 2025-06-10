@@ -9,7 +9,11 @@ interface ChatRoomPaneProps {
   theme: "dark" | "light";
 }
 
-export function ChatRoomPane({ chatRoomId, onMessageSent, theme }: ChatRoomPaneProps) {
+export function ChatRoomPane({
+  chatRoomId,
+  onMessageSent,
+  theme,
+}: ChatRoomPaneProps) {
   const currentUserId = getCurrentUserIdFromToken();
   interface Message {
     text: string;
@@ -28,7 +32,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent, theme }: ChatRoomPaneP
     const fetchRoomInfo = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/chatroom/getChatRoom/${chatRoomId}`
+          `https://homies-oqpt.onrender.com/api/chatroom/getChatRoom/${chatRoomId}`
         );
         setRoomTitle(res.data.roomId.title);
       } catch (error) {
@@ -52,7 +56,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent, theme }: ChatRoomPaneP
     const fetchMessages = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/message/${chatRoomId}`
+          `https://homies-oqpt.onrender.com/api/message/${chatRoomId}`
         );
         const formattedMessages = res.data.map((msg: ApiMessage) => ({
           text: msg.content,
@@ -122,7 +126,7 @@ export function ChatRoomPane({ chatRoomId, onMessageSent, theme }: ChatRoomPaneP
     });
 
     try {
-      await axios.post("http://localhost:5000/api/message/save", {
+      await axios.post("https://homies-oqpt.onrender.com/api/message/save", {
         chatRoomId,
         senderId: currentUserId,
         content: newMessage,

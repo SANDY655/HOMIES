@@ -167,7 +167,7 @@ export function PostRoom() {
       }
 
       const { data } = await axios.post(
-        "http://localhost:5000/api/cloud/get-signature"
+        "https://homies-oqpt.onrender.com/api/cloud/get-signature"
       );
 
       const uploaders = validFiles.map((file) => {
@@ -273,13 +273,16 @@ export function PostRoom() {
     const formData = { ...form, email: userEmail, userId: userId };
 
     try {
-      const response = await fetch("http://localhost:5000/api/room/postroom", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        "https://homies-oqpt.onrender.com/api/room/postroom",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -704,7 +707,9 @@ export function PostRoom() {
                   control={
                     <Checkbox
                       name={`amenities.${key}`}
-                      checked={form.amenities[key as keyof typeof form.amenities]}
+                      checked={
+                        form.amenities[key as keyof typeof form.amenities]
+                      }
                       onChange={handleChange}
                       sx={{
                         color: theme === "dark" ? "#bbb" : undefined,
@@ -770,7 +775,9 @@ export function PostRoom() {
               <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Amenities:</strong>{" "}
                 {Object.keys(form.amenities)
-                  .filter((key) => form.amenities[key as keyof typeof form.amenities])
+                  .filter(
+                    (key) => form.amenities[key as keyof typeof form.amenities]
+                  )
                   .map((key) =>
                     key
                       .replace(/([A-Z])/g, " $1")

@@ -79,7 +79,7 @@ export function ChatWithSidebar() {
     const fetchChatRooms = async () => {
       try {
         const res = await axios.get<ChatRoom[]>(
-          `http://localhost:5000/api/chatroom/${currentUserId}`
+          `https://homies-oqpt.onrender.com/api/chatroom/${currentUserId}`
         );
         setChatRooms(res.data);
 

@@ -138,7 +138,7 @@ export function SearchRoom() {
     amenityFilters.forEach((amenity) => params.append("amenities", amenity));
 
     const res = await fetch(
-      `http://localhost:5000/api/room/searchroom?${params.toString()}`
+      `https://homies-oqpt.onrender.com/api/room/searchroom?${params.toString()}`
     );
     const json = await res.json();
     return json.data;
@@ -334,7 +334,10 @@ export default (parentRoute: RootRoute) =>
     path: "/search-rooms",
     component: SearchRoom,
     getParentRoute: () => parentRoute,
-    beforeLoad: (ctx: { context: { auth?: { isAuthenticated: () => boolean } }, location: { href: string } }) => {
+    beforeLoad: (ctx: {
+      context: { auth?: { isAuthenticated: () => boolean } };
+      location: { href: string };
+    }) => {
       if (!ctx.context?.auth?.isAuthenticated()) {
         throw redirect({ to: "/", search: { redirect: ctx.location.href } });
       }

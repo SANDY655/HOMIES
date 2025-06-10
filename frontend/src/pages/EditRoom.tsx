@@ -91,7 +91,9 @@ export function EditRoom() {
   } = useQuery({
     queryKey: ["room", roomId],
     queryFn: async () => {
-      const res = await fetch(`http://localhost:5000/api/room/${roomId}`);
+      const res = await fetch(
+        `https://homies-oqpt.onrender.com/api/room/${roomId}`
+      );
       const data = await res.json();
       if (!data.success)
         throw new Error(data.message || "Failed to fetch room");
@@ -127,9 +129,12 @@ export function EditRoom() {
 
   async function handleImageUpload(files: File[]) {
     try {
-      const res = await fetch("http://localhost:5000/api/cloud/get-signature", {
-        method: "POST",
-      });
+      const res = await fetch(
+        "https://homies-oqpt.onrender.com/api/cloud/get-signature",
+        {
+          method: "POST",
+        }
+      );
       const { signature, timestamp, cloudName, apiKey } = await res.json();
 
       const uploadedUrls: string[] = [];
@@ -167,11 +172,14 @@ export function EditRoom() {
   async function handleDeleteImage(imgUrl: string) {
     try {
       const publicId = getPublicIdFromUrl(imgUrl);
-      const res = await fetch("http://localhost:5000/api/cloud/image", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicId }),
-      });
+      const res = await fetch(
+        "https://homies-oqpt.onrender.com/api/cloud/image",
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ publicId }),
+        }
+      );
       const data = await res.json();
       if (!data.success)
         throw new Error(data.message || "Failed to delete image");
@@ -187,11 +195,14 @@ export function EditRoom() {
 
   const updateMutation = useMutation({
     mutationFn: async (updatedRoom: Room) => {
-      const res = await fetch(`http://localhost:5000/api/room/${roomId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedRoom),
-      });
+      const res = await fetch(
+        `https://homies-oqpt.onrender.com/api/room/${roomId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedRoom),
+        }
+      );
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Update failed");
       return data;
@@ -395,7 +406,10 @@ export default (parentRoute: RootRoute) =>
     path: "/edit-room/$roomId",
     getParentRoute: () => parentRoute,
     component: EditRoom,
-    beforeLoad: (ctx: { context: { auth?: { isAuthenticated: () => boolean } }, location: { href: string } }) => {
+    beforeLoad: (ctx: {
+      context: { auth?: { isAuthenticated: () => boolean } };
+      location: { href: string };
+    }) => {
       // Assuming auth is managed by context and redirects unauthenticated users
       if (!ctx.context.auth?.isAuthenticated()) {
         throw redirect({ to: "/", search: { redirect: ctx.location.href } });

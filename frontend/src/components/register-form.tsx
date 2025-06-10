@@ -78,7 +78,7 @@ export function RegisterForm({
     try {
       const { name, email, password, confirmPassword } = watch();
       const res = await axios.post(
-        "http://localhost:5000/api/user/send-otp",
+        "https://homies-oqpt.onrender.com/api/user/send-otp",
         {
           name,
           email,
@@ -111,7 +111,7 @@ export function RegisterForm({
     setMessage("");
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/user/verify-otp",
+        "https://homies-oqpt.onrender.com/api/user/verify-otp",
         {
           email: data.email,
           otp: data.otp,

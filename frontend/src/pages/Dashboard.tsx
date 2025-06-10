@@ -120,7 +120,7 @@ export function Dashboard() {
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        await fetch("http://localhost:5000/api/user/logout", {
+        await fetch("https://homies-oqpt.onrender.com/api/user/logout", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -169,7 +169,12 @@ export function Dashboard() {
         </h1>
         <div className="flex items-center gap-4">
           <Button
-            onClick={() => navigate({ to: "/chatwithsidebar", search: { chatRoomId: undefined } })}
+            onClick={() =>
+              navigate({
+                to: "/chatwithsidebar",
+                search: { chatRoomId: undefined },
+              })
+            }
             className="p-2 bg-white text-blue-600 hover:bg-gray-100 border border-gray-300 rounded-full dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700 dark:border-gray-600"
             variant="ghost"
           >
@@ -316,7 +321,10 @@ export default (parentRoute: RootRoute) =>
     path: "/dashboard",
     component: Dashboard,
     getParentRoute: () => parentRoute,
-    beforeLoad: (ctx: { context: { auth?: { isAuthenticated: () => boolean } }, location: { href: string } }) => {
+    beforeLoad: (ctx: {
+      context: { auth?: { isAuthenticated: () => boolean } };
+      location: { href: string };
+    }) => {
       if (!ctx.context.auth?.isAuthenticated()) {
         throw redirect({ to: "/", search: { redirect: ctx.location.href } });
       }
