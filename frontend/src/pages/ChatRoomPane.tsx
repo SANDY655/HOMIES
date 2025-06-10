@@ -109,8 +109,9 @@ export function ChatRoomPane({ chatRoomId, onMessageSent, theme }: ChatRoomPaneP
     if (!newMessage.trim()) return;
     const msg = {
       text: newMessage,
-      senderId: currentUserId,
+      senderId: currentUserId ?? "",
       senderEmail: "Me",
+      senderName: "You",
       timestamp: new Date().toISOString(),
     };
 
