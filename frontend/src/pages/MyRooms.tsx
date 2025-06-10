@@ -288,10 +288,10 @@ export function MyRooms() {
                             </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => deleteMutation.mutate(room._id)}
-                              disabled={deleteMutation.isLoading}
+                              disabled={deleteMutation.isPending}
                               className="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {deleteMutation.isLoading
+                              {deleteMutation.isPending
                                 ? "Deleting..."
                                 : "Confirm Delete"}
                             </AlertDialogAction>
@@ -318,7 +318,7 @@ export default (parentRoute: RootRoute) =>
     beforeLoad: () => {
       const isLoggedIn = !!localStorage.getItem("email");
       if (!isLoggedIn) {
-        throw redirect({ to: "/login" });
+        throw redirect({ to: "/" });
       }
     },
   });

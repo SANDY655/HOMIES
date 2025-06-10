@@ -174,7 +174,8 @@ export function ChatWithSidebar() {
         <li
           key={room._id}
           onClick={() => {
-            navigate({ search: (prev) => ({ ...prev, chatRoomId: room._id }) });
+            navigate({ search: { chatRoomId: room._id } as any });
+
             setSidebarOpen(false); // Close sidebar on mobile after selecting
           }}
           className={`cursor-pointer p-3 border-none rounded hover:bg-indigo-100 dark:hover:bg-indigo-800 ${
@@ -319,13 +320,28 @@ export function ChatWithSidebar() {
   );
 }
 
+type AuthContext = {
+  auth: {
+    isAuthenticated: () => boolean;
+  };
+};
+
 export default (parentRoute: RootRoute) =>
   createRoute({
     path: "/chatwithsidebar",
     component: ChatWithSidebar,
     getParentRoute: () => parentRoute,
-    beforeLoad: ({ context }) => {
-      if (!context.auth.isAuthenticated()) {
+    validateSearch: (search: Record<string, unknown>) => {
+      // Allow chatRoomId as a search param
+      return {
+        chatRoomId:
+          typeof search.chatRoomId === "string" ? search.chatRoomId : undefined,
+      };
+    },
+    beforeLoad: (ctx) => {
+      // Access auth from ctx.context as appropriate for your app
+      const context = ctx.context as AuthContext;
+      if (!context?.auth?.isAuthenticated()) {
         throw redirect({ to: "/" });
       }
     },

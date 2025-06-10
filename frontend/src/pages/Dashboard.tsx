@@ -64,7 +64,7 @@ function ConfirmLogout({
 }
 
 function useOutsideClick(
-  ref: React.RefObject<HTMLDivElement>,
+  ref: React.RefObject<HTMLDivElement | null>,
   callback: () => void
 ) {
   useEffect(() => {
@@ -169,7 +169,7 @@ export function Dashboard() {
         </h1>
         <div className="flex items-center gap-4">
           <Button
-            onClick={() => navigate({ to: "/chatwithsidebar" })}
+            onClick={() => navigate({ to: "/chatwithsidebar", search: { chatRoomId: undefined } })}
             className="p-2 bg-white text-blue-600 hover:bg-gray-100 border border-gray-300 rounded-full dark:bg-gray-800 dark:text-blue-400 dark:hover:bg-gray-700 dark:border-gray-600"
             variant="ghost"
           >
@@ -316,9 +316,9 @@ export default (parentRoute: RootRoute) =>
     path: "/dashboard",
     component: Dashboard,
     getParentRoute: () => parentRoute,
-    beforeLoad: ({ context, location }) => {
-      if (!context.auth.isAuthenticated()) {
-        throw redirect({ to: "/", search: { redirect: location.href } });
+    beforeLoad: (ctx: { context: { auth?: { isAuthenticated: () => boolean } }, location: { href: string } }) => {
+      if (!ctx.context.auth?.isAuthenticated()) {
+        throw redirect({ to: "/", search: { redirect: ctx.location.href } });
       }
     },
   });

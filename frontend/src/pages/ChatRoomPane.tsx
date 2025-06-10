@@ -3,12 +3,26 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { getCurrentUserIdFromToken } from "@/lib/getCurrentUserIdFromToken";
 
-export function ChatRoomPane({ chatRoomId, onMessageSent, theme }) {
+interface ChatRoomPaneProps {
+  chatRoomId: string;
+  onMessageSent: (msg: any) => void;
+  theme: "dark" | "light";
+}
+
+export function ChatRoomPane({ chatRoomId, onMessageSent, theme }: ChatRoomPaneProps) {
   const currentUserId = getCurrentUserIdFromToken();
-  const [messages, setMessages] = useState([]);
+  interface Message {
+    text: string;
+    senderId: string;
+    senderEmail?: string;
+    senderName?: string;
+    timestamp: string;
+  }
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [roomTitle, setRoomTitle] = useState("Chat Room");
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchRoomInfo = async () => {
@@ -24,13 +38,23 @@ export function ChatRoomPane({ chatRoomId, onMessageSent, theme }) {
     fetchRoomInfo();
   }, [chatRoomId]);
 
+  interface ApiMessage {
+    content: string;
+    sender: {
+      _id: string;
+      email: string;
+      name?: string;
+    };
+    timestamp: string;
+  }
+
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const res = await axios.get(
           `http://localhost:5000/api/message/${chatRoomId}`
         );
-        const formattedMessages = res.data.map((msg) => ({
+        const formattedMessages = res.data.map((msg: ApiMessage) => ({
           text: msg.content,
           senderId: msg.sender._id,
           senderEmail: msg.sender.email,
@@ -54,7 +78,14 @@ export function ChatRoomPane({ chatRoomId, onMessageSent, theme }) {
       socket.connect();
     }
 
-    const handleMessage = (msg) => {
+    const handleMessage = (msg: {
+      chatRoomId: string;
+      message: string;
+      sender: string;
+      senderName?: string;
+      senderEmail?: string;
+      timestamp: string;
+    }) => {
       if (msg.chatRoomId === chatRoomId) {
         const newMsg = {
           text: msg.message,

@@ -59,7 +59,10 @@ export function LoginForm({
       localStorage.setItem("email", JSON.stringify(user.email));
       localStorage.setItem("username", user.name);
       setMessage("Login Successful");
-      const redirectTo = router.state.location.search.redirect ?? "/dashboard";
+      const redirectTo =
+        (router.state.location.search &&
+          (router.state.location.search as Record<string, any>)["redirect"]) ??
+        "/dashboard";
       router.navigate({ to: redirectTo });
     } catch (error: any) {
       if (axios.isAxiosError(error)) {

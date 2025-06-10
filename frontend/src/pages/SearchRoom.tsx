@@ -55,7 +55,7 @@ function RoomCard({ room }: { room: Room }) {
   }, [room.images.length]);
 
   return (
-    <Link to={`/rooms/${room._id}`}>
+    <Link to="/rooms/$roomId" params={{ roomId: room._id }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -334,9 +334,9 @@ export default (parentRoute: RootRoute) =>
     path: "/search-rooms",
     component: SearchRoom,
     getParentRoute: () => parentRoute,
-    beforeLoad: ({ context, location }) => {
-      if (!context.auth.isAuthenticated()) {
-        throw redirect({ to: "/", search: { redirect: location.href } });
+    beforeLoad: (ctx: { context: { auth?: { isAuthenticated: () => boolean } }, location: { href: string } }) => {
+      if (!ctx.context?.auth?.isAuthenticated()) {
+        throw redirect({ to: "/", search: { redirect: ctx.location.href } });
       }
     },
   });

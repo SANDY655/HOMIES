@@ -5,13 +5,7 @@ import {
   useNavigate,
   Link, // Import Link from tanstack/react-router
 } from "@tanstack/react-router";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Polyline,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import { useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Carousel } from "react-responsive-carousel";
@@ -270,7 +264,6 @@ export function Room() {
               emulateTouch
               className="rounded-l-3xl h-full flex flex-col"
               thumbWidth={80}
-              thumbHeight={56}
               swipeScrollTolerance={5}
             >
               {room.images.map((url, index) => (
@@ -368,14 +361,16 @@ export function Room() {
               typeof coordinates.lat === "number" &&
               typeof coordinates.lon === "number" ? (
                 <MapContainer
-                  center={[coordinates.lat, coordinates.lon]}
-                  zoom={13}
-                  scrollWheelZoom={false}
-                  style={{
-                    height: "200px",
-                    borderRadius: "0.75rem",
-                    width: "100%",
-                  }}
+                  {...({
+                    center: [coordinates.lat, coordinates.lon],
+                    zoom: 13,
+                    scrollWheelZoom: false,
+                    style: {
+                      height: "200px",
+                      borderRadius: "0.75rem",
+                      width: "100%",
+                    },
+                  } as any)}
                 >
                   <TileLayer
                     url={
@@ -383,6 +378,7 @@ export function Room() {
                         ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         : "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png"
                     }
+                    // @ts-expect-error: attribution is a valid prop for TileLayer in react-leaflet
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   />
                   <Marker position={[coordinates.lat, coordinates.lon]}>

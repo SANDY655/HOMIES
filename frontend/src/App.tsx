@@ -30,7 +30,13 @@ const applyTheme = (theme: "light" | "dark") => {
 };
 
 // Modal Component
-function Modal({ open, onClose, children }) {
+type ModalProps = {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+};
+
+function Modal({ open, onClose, children }: ModalProps) {
   if (!open) return null;
 
   return (
@@ -73,13 +79,13 @@ function Modal({ open, onClose, children }) {
 }
 
 // Dropdown Component
-function Dropdown({ onSelect }) {
+function Dropdown({ onSelect }: { onSelect: (type: string) => void }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef();
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (ref.current && !ref.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
         setOpen(false);
       }
     }
@@ -137,17 +143,27 @@ function Dropdown({ onSelect }) {
 }
 
 // Main App Component
+type Room = {
+  _id: string;
+  title: string;
+  roomType: string;
+  location: string;
+  rent: number;
+  images: string[];
+  amenities?: { [key: string]: boolean };
+};
+
 function App() {
   const navigate = useNavigate();
-  const search = useSearch({ from: "/" });
-  const [rooms, setRooms] = useState([]);
+  const search = useSearch({ strict: false }) as { modal?: "login" | "register" };
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalType, setModalType] = useState(null);
-  const [imageIndexes, setImageIndexes] = useState({});
+  const [modalType, setModalType] = useState<"login" | "register" | null>(null);
+  const [imageIndexes, setImageIndexes] = useState<{ [roomId: string]: number }>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [priceFilter, setPriceFilter] = useState("all");
   const [roomTypeFilter, setRoomTypeFilter] = useState("all");
-  const [amenityFilters, setAmenityFilters] = useState([]);
+  const [amenityFilters, setAmenityFilters] = useState<string[]>([]);
   const [availableFrom, setAvailableFrom] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -264,7 +280,7 @@ function App() {
           >
             {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </button>
-          <Dropdown onSelect={(type) => setModalType(type)} />
+          <Dropdown onSelect={(type) => setModalType(type as "login" | "register")} />
         </div>
       </header>
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
@@ -396,7 +412,7 @@ function App() {
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         <p className="font-semibold">Amenities:</p>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          {Object.entries(room.amenities)
+                          {Object.entries(room.amenities || {})
                             .filter(([, value]) => value)
                             .map(([key]) => (
                               <span

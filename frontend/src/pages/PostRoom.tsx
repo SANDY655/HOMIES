@@ -62,7 +62,25 @@ const stepSchemas = [
 ];
 
 // Default form values
-const defaultForm = {
+type FormType = {
+  title: string;
+  description: string;
+  location: string;
+  rent: number;
+  deposit: number;
+  availableFrom: string;
+  roomType: string;
+  images: string[];
+  amenities: {
+    wifi: boolean;
+    ac: boolean;
+    parking: boolean;
+    furnished: boolean;
+    washingMachine: boolean;
+  };
+};
+
+const defaultForm: FormType = {
   title: "",
   description: "",
   location: "",
@@ -92,9 +110,9 @@ const applyTheme = (theme: "light" | "dark") => {
 export function PostRoom() {
   const navigate = useNavigate();
 
-  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState<FormType>(defaultForm);
   const [errors, setErrors] = useState<{ [key: string]: string }>({}); // Explicitly type errors
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(
@@ -112,7 +130,7 @@ export function PostRoom() {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     if (name.includes("amenities.")) {
       const key = name.split(".")[1];
@@ -128,14 +146,14 @@ export function PostRoom() {
     }
   };
 
-  const handleRemoveImage = (indexToRemove) => {
+  const handleRemoveImage = (indexToRemove: number) => {
     setForm((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== indexToRemove),
     }));
   };
 
-  const handleUpload = async (files) => {
+  const handleUpload = async (files: FileList) => {
     try {
       const validFiles = Array.from(files).filter((file) => {
         const isValidType = file.type.startsWith("image/");
@@ -611,7 +629,9 @@ export function PostRoom() {
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={(e) => handleUpload(e.target.files)}
+                  onChange={(e) => {
+                    if (e.target.files) handleUpload(e.target.files);
+                  }}
                 />
               </Button>
               {errors.images && (
@@ -684,7 +704,7 @@ export function PostRoom() {
                   control={
                     <Checkbox
                       name={`amenities.${key}`}
-                      checked={form.amenities[key]}
+                      checked={form.amenities[key as keyof typeof form.amenities]}
                       onChange={handleChange}
                       sx={{
                         color: theme === "dark" ? "#bbb" : undefined,
@@ -750,7 +770,7 @@ export function PostRoom() {
               <Typography sx={{ color: theme === "dark" ? "#ddd" : undefined }}>
                 <strong>Amenities:</strong>{" "}
                 {Object.keys(form.amenities)
-                  .filter((key) => form.amenities[key])
+                  .filter((key) => form.amenities[key as keyof typeof form.amenities])
                   .map((key) =>
                     key
                       .replace(/([A-Z])/g, " $1")
@@ -974,8 +994,14 @@ export default (parentRoute: RootRoute) =>
     path: "/post-room",
     component: PostRoom,
     getParentRoute: () => parentRoute,
-    beforeLoad: ({ context, location }) => {
-      if (!context.auth.isAuthenticated()) {
+    beforeLoad: ({
+      context,
+      location,
+    }: {
+      context: { auth?: { isAuthenticated: () => boolean } };
+      location: { href: string };
+    }) => {
+      if (!context?.auth?.isAuthenticated()) {
         throw redirect({ to: "/", search: { redirect: location.href } });
       }
     },

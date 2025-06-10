@@ -282,23 +282,26 @@ export function EditRoom() {
               "rent",
               "deposit",
               "roomType",
-            ].map((field) => (
-              <div key={field}>
-                <Label
-                  htmlFor={field}
-                  className="text-gray-700 dark:text-gray-300 text-sm"
-                >
-                  {field.charAt(0).toUpperCase() + field.slice(1)}
-                </Label>
-                <Input
-                  id={field}
-                  name={field}
-                  value={formData[field as keyof typeof formData]} // Type assertion
-                  onChange={handleChange}
-                  className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 text-sm h-8"
-                />
-              </div>
-            ))}
+            ].map((field) =>
+              typeof formData[field as keyof Room] === "string" ||
+              typeof formData[field as keyof Room] === "number" ? (
+                <div key={field}>
+                  <Label
+                    htmlFor={field}
+                    className="text-gray-700 dark:text-gray-300 text-sm"
+                  >
+                    {field.charAt(0).toUpperCase() + field.slice(1)}
+                  </Label>
+                  <Input
+                    id={field}
+                    name={field}
+                    value={formData[field as keyof Room] as string | number}
+                    onChange={handleChange}
+                    className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 text-sm h-8"
+                  />
+                </div>
+              ) : null
+            )}
 
             {/* Amenities checkboxes */}
             <div>
@@ -392,10 +395,10 @@ export default (parentRoute: RootRoute) =>
     path: "/edit-room/$roomId",
     getParentRoute: () => parentRoute,
     component: EditRoom,
-    beforeLoad: ({ context, location }) => {
+    beforeLoad: (ctx: { context: { auth?: { isAuthenticated: () => boolean } }, location: { href: string } }) => {
       // Assuming auth is managed by context and redirects unauthenticated users
-      if (!context.auth.isAuthenticated()) {
-        throw redirect({ to: "/", search: { redirect: location.href } });
+      if (!ctx.context.auth?.isAuthenticated()) {
+        throw redirect({ to: "/", search: { redirect: ctx.location.href } });
       }
     },
   });

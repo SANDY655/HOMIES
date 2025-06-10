@@ -448,9 +448,12 @@ export default (parentRoute: RootRoute) =>
     path: "/profile/$userId",
     component: Profile,
     getParentRoute: () => parentRoute,
-    beforeLoad: ({ context, location }) => {
-      if (!context.auth.isAuthenticated()) {
-        throw redirect({ to: "/", search: { redirect: location.href } });
+    beforeLoad: (ctx) => {
+      // Access auth and location from ctx as provided by TanStack Router
+      const auth = (ctx as any).context?.auth;
+      const location = (ctx as any).location;
+      if (!auth?.isAuthenticated()) {
+        throw redirect({ to: "/", search: { redirect: location?.href } });
       }
     },
   });
